@@ -1,0 +1,72 @@
+================================================================================
+GONG CALL TRANSCRIPT
+================================================================================
+
+CALL METADATA
+-------------
+Call ID: GONG8775587
+Date: 2025-10-20
+Duration: 37 minutes
+Call Type: Renewal Discussion
+
+ACCOUNT INFORMATION
+-------------------
+Account: Paramount Global
+Account ID: ACC000099
+Industry: Media
+Location: New York, NY
+Employees: 22,000
+Health Score: At Risk
+
+PARTICIPANTS
+------------
+- Emily Rodriguez (Account Executive)
+- Rachel Green (Sales Engineer)
+- IT Director, Paramount Global (Customer)
+
+CALL SUMMARY
+------------
+Routine check-in with stable customer. Platform working as expected. No immediate concerns but limited engagement.
+
+KEY INSIGHTS
+------------
+STABLE: Customer is satisfied but not engaged. Potential to increase adoption with targeted outreach.
+
+================================================================================
+FULL TRANSCRIPT
+================================================================================
+
+[00:00:00] Emily Rodriguez: Good to connect. How has Q3 been treating you?
+
+[00:00:20] Customer: Busy as always. Lots of projects competing for attention.
+
+[00:00:50] Emily Rodriguez: I can imagine. Where does identity fit in your priorities?
+
+[00:01:20] Customer: It's maintenance mode honestly. We set it up and it works. Not much else to do.
+
+[00:01:50] Rachel Green: That's actually a good sign - means the platform is running smoothly.
+
+[00:02:20] Customer: I suppose so. We have other fires to fight right now.
+
+[00:02:50] Customer: Cloud migration is consuming most of our bandwidth.
+
+[00:03:30] Emily Rodriguez: Identity can actually help with cloud migrations. Access Gateway supports hybrid environments.
+
+[00:04:00] Customer: We might look at that eventually. Not a priority right now though.
+
+[00:04:30] Customer: Our current solution handles what we need for the migration.
+
+[00:05:00] Rachel Green: Makes sense. When you're ready to discuss, let us know.
+
+[00:05:30] Customer: Will do. What else is on your agenda today?
+
+[00:06:00] Emily Rodriguez: Just wanted to check in and make sure everything is running smoothly.
+
+[00:06:30] Customer: It is. Nothing else really to discuss.
+
+[00:07:00] Emily Rodriguez: Understood. We're here if you need anything.
+
+[00:07:30] Customer: Appreciate it. Talk soon.
+
+[END OF TRANSCRIPT]
+================================================================================

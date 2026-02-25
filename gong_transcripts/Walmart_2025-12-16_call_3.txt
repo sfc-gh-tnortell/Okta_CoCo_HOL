@@ -1,0 +1,70 @@
+================================================================================
+GONG CALL TRANSCRIPT
+================================================================================
+
+CALL METADATA
+-------------
+Call ID: GONG8067358
+Date: 2025-12-16
+Duration: 40 minutes
+Call Type: Expansion Discussion
+
+ACCOUNT INFORMATION
+-------------------
+Account: Walmart
+Account ID: ACC000001
+Industry: Retail
+Location: Bentonville, AR
+Employees: 2,100,000
+Health Score: Healthy
+
+PARTICIPANTS
+------------
+- Sarah Johnson (Account Executive)
+- Lisa Anderson (Sales Engineer)
+- Director of Security, Walmart (Customer)
+
+CALL SUMMARY
+------------
+Excellent call with engaged customer. Strong platform adoption and high satisfaction. Customer interested in expanding usage and adding new products.
+
+KEY INSIGHTS
+------------
+GROWTH: Customer is a strong advocate. Multiple expansion opportunities identified. Executive sponsorship confirmed.
+
+================================================================================
+FULL TRANSCRIPT
+================================================================================
+
+[00:00:00] Sarah Johnson: Great to see you! How has everything been since our last call?
+
+[00:00:20] Customer: Honestly? Better than expected. We just passed our SOC 2 audit with flying colors, and the auditors specifically called out our identity controls.
+
+[00:01:00] Lisa Anderson: Congratulations! That's a huge accomplishment.
+
+[00:01:30] Customer: Thanks! Your platform made it so much easier. The access certification reports were exactly what the auditors needed.
+
+[00:02:15] Sarah Johnson: That's exactly the outcome we aim for. What's next on your roadmap?
+
+[00:02:45] Customer: We're planning a major expansion. The board approved a 40% increase in our security budget, and identity is the top priority.
+
+[00:03:30] Customer: We want to roll out MFA to all contractors and implement privileged access management.
+
+[00:04:15] Lisa Anderson: Both excellent choices. PAM especially will strengthen your security posture significantly.
+
+[00:05:00] Customer: Our CISO is a big advocate. She's been presenting our success metrics to the board quarterly.
+
+[00:05:45] Sarah Johnson: That's wonderful to hear. Executive sponsorship makes such a difference.
+
+[00:06:30] Customer: Absolutely. She wants to do a case study with you actually - would that be possible?
+
+[00:07:00] Sarah Johnson: We'd be honored! Our marketing team would love to connect.
+
+[00:07:30] Customer: Great! Also, do you have any customer advisory board opportunities? We'd love to provide input on your roadmap.
+
+[00:08:15] Lisa Anderson: We absolutely do. I'll send you the details after this call.
+
+[00:08:45] Customer: Perfect. This has been a great partnership. Looking forward to growing it further!
+
+[END OF TRANSCRIPT]
+================================================================================

@@ -1,0 +1,72 @@
+================================================================================
+GONG CALL TRANSCRIPT
+================================================================================
+
+CALL METADATA
+-------------
+Call ID: GONG4708105
+Date: 2025-12-03
+Duration: 53 minutes
+Call Type: Issue Resolution
+
+ACCOUNT INFORMATION
+-------------------
+Account: PepsiCo
+Account ID: ACC000037
+Industry: Consumer Goods
+Location: Purchase, NY
+Employees: 318,000
+Health Score: Critical
+
+PARTICIPANTS
+------------
+- James Williams (Account Executive)
+- Chris Taylor (Sales Engineer)
+- VP of IT, PepsiCo (Customer)
+
+CALL SUMMARY
+------------
+Difficult call addressing customer concerns. Platform issues causing frustration. Customer evaluating alternatives and considering churn.
+
+KEY INSIGHTS
+------------
+CHURN RISK: Customer is frustrated and evaluating competitors. Immediate action required to retain account.
+
+================================================================================
+FULL TRANSCRIPT
+================================================================================
+
+[00:00:00] James Williams: Thanks for your time today. I wanted to check in on how things are going.
+
+[00:00:20] Customer: Since you asked, not well. I'm frustrated and disappointed.
+
+[00:00:50] Customer: We signed up expecting a premium experience. What we've gotten is anything but.
+
+[00:01:30] James Williams: I'm sorry to hear that. What specific issues are you facing?
+
+[00:02:00] Customer: Support response times are terrible. Our last critical ticket took 3 days to get a response.
+
+[00:02:45] Customer: Three days! Meanwhile our users were locked out of essential applications.
+
+[00:03:30] Chris Taylor: That's unacceptable. Our SLA guarantees 4-hour response for critical issues.
+
+[00:04:00] Customer: Well, your SLA isn't worth the paper it's written on apparently.
+
+[00:04:45] Customer: I've escalated this internally. Our procurement team is reviewing the contract for termination clauses.
+
+[00:05:30] James Williams: I don't want it to come to that. What can we do to make this right?
+
+[00:06:00] Customer: Honestly? I'm not sure there's anything you can do at this point.
+
+[00:06:45] Customer: The trust is broken. My team has lost confidence in the platform.
+
+[00:07:30] Customer: We've already started a POC with a competitor. It's going well.
+
+[00:08:00] James Williams: Is there anything that would pause that evaluation?
+
+[00:08:30] Customer: Maybe if your CEO called me personally to apologize. But even then, I'm skeptical.
+
+[00:09:00] Customer: This relationship has been a disappointment from start to finish.
+
+[END OF TRANSCRIPT]
+================================================================================

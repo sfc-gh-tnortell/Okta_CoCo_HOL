@@ -1,0 +1,72 @@
+================================================================================
+GONG CALL TRANSCRIPT
+================================================================================
+
+CALL METADATA
+-------------
+Call ID: GONG8433109
+Date: 2025-11-03
+Duration: 83 minutes
+Call Type: Renewal Discussion
+
+ACCOUNT INFORMATION
+-------------------
+Account: Southwest Airlines
+Account ID: ACC000110
+Industry: Transportation
+Location: Dallas, TX
+Employees: 74,000
+Health Score: Good
+
+PARTICIPANTS
+------------
+- James Williams (Account Executive)
+- Chris Taylor (Sales Engineer)
+- VP of IT, Southwest Airlines (Customer)
+
+CALL SUMMARY
+------------
+Routine check-in with stable customer. Platform working as expected. No immediate concerns but limited engagement.
+
+KEY INSIGHTS
+------------
+STABLE: Customer is satisfied but not engaged. Potential to increase adoption with targeted outreach.
+
+================================================================================
+FULL TRANSCRIPT
+================================================================================
+
+[00:00:00] James Williams: Good to connect. How has Q3 been treating you?
+
+[00:00:20] Customer: Busy as always. Lots of projects competing for attention.
+
+[00:00:50] James Williams: I can imagine. Where does identity fit in your priorities?
+
+[00:01:20] Customer: It's maintenance mode honestly. We set it up and it works. Not much else to do.
+
+[00:01:50] Chris Taylor: That's actually a good sign - means the platform is running smoothly.
+
+[00:02:20] Customer: I suppose so. We have other fires to fight right now.
+
+[00:02:50] Customer: Cloud migration is consuming most of our bandwidth.
+
+[00:03:30] James Williams: Identity can actually help with cloud migrations. Access Gateway supports hybrid environments.
+
+[00:04:00] Customer: We might look at that eventually. Not a priority right now though.
+
+[00:04:30] Customer: Our current solution handles what we need for the migration.
+
+[00:05:00] Chris Taylor: Makes sense. When you're ready to discuss, let us know.
+
+[00:05:30] Customer: Will do. What else is on your agenda today?
+
+[00:06:00] James Williams: Just wanted to check in and make sure everything is running smoothly.
+
+[00:06:30] Customer: It is. Nothing else really to discuss.
+
+[00:07:00] James Williams: Understood. We're here if you need anything.
+
+[00:07:30] Customer: Appreciate it. Talk soon.
+
+[END OF TRANSCRIPT]
+================================================================================

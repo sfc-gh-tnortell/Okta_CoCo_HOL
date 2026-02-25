@@ -1,0 +1,74 @@
+================================================================================
+GONG CALL TRANSCRIPT
+================================================================================
+
+CALL METADATA
+-------------
+Call ID: GONG2288312
+Date: 2025-11-11
+Duration: 75 minutes
+Call Type: Issue Resolution
+
+ACCOUNT INFORMATION
+-------------------
+Account: FedEx
+Account ID: ACC000038
+Industry: Transportation
+Location: Memphis, TN
+Employees: 518,000
+Health Score: Critical
+
+PARTICIPANTS
+------------
+- Sarah Johnson (Account Executive)
+- Lisa Anderson (Sales Engineer)
+- Director of Security, FedEx (Customer)
+
+CALL SUMMARY
+------------
+Difficult call addressing customer concerns. Platform issues causing frustration. Customer evaluating alternatives and considering churn.
+
+KEY INSIGHTS
+------------
+CHURN RISK: Customer is frustrated and evaluating competitors. Immediate action required to retain account.
+
+================================================================================
+FULL TRANSCRIPT
+================================================================================
+
+[00:00:00] Sarah Johnson: Thanks for taking this call. I understand there have been some concerns?
+
+[00:00:20] Customer: Concerns is an understatement. We've been having serious issues with the platform.
+
+[00:00:45] Sarah Johnson: I'm sorry to hear that. Can you walk me through what's been happening?
+
+[00:01:15] Customer: Where do I start? The login failures have increased 300% this quarter. Our help desk is overwhelmed.
+
+[00:02:00] Lisa Anderson: That's definitely not acceptable. What error messages are users seeing?
+
+[00:02:30] Customer: Various errors. Timeouts, authentication failures, MFA not working. It's a mess.
+
+[00:03:15] Customer: Frankly, our leadership is questioning whether we made the right choice with your platform.
+
+[00:04:00] Sarah Johnson: I completely understand the frustration. We need to get this resolved immediately.
+
+[00:04:30] Customer: We've opened multiple support tickets but responses have been slow. This is affecting our business.
+
+[00:05:15] Lisa Anderson: I'll personally escalate this to our engineering team today.
+
+[00:05:45] Customer: We've heard that before. I need to see actual results, not promises.
+
+[00:06:30] Customer: Our CFO is already asking me to evaluate alternatives. This is that serious.
+
+[00:07:15] Sarah Johnson: I hear you. What would it take to regain your confidence?
+
+[00:07:45] Customer: Fix the issues, provide a detailed root cause analysis, and show me it won't happen again.
+
+[00:08:30] Customer: And honestly? We may need to discuss pricing. We're not getting the value we're paying for.
+
+[00:09:00] Sarah Johnson: Those are fair requests. Let me set up an emergency call with our VP of Engineering.
+
+[00:09:30] Customer: Fine. But this is our last attempt. If things don't improve, we're moving to a competitor.
+
+[END OF TRANSCRIPT]
+================================================================================

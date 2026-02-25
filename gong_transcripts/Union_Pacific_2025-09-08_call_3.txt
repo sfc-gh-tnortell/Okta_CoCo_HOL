@@ -1,0 +1,72 @@
+================================================================================
+GONG CALL TRANSCRIPT
+================================================================================
+
+CALL METADATA
+-------------
+Call ID: GONG4504037
+Date: 2025-09-08
+Duration: 79 minutes
+Call Type: Renewal Discussion
+
+ACCOUNT INFORMATION
+-------------------
+Account: Union Pacific
+Account ID: ACC000111
+Industry: Transportation
+Location: Omaha, NE
+Employees: 30,000
+Health Score: Good
+
+PARTICIPANTS
+------------
+- Amanda Thompson (Account Executive)
+- David Park (Sales Engineer)
+- CISO, Union Pacific (Customer)
+
+CALL SUMMARY
+------------
+Routine check-in with stable customer. Platform working as expected. No immediate concerns but limited engagement.
+
+KEY INSIGHTS
+------------
+STABLE: Customer is satisfied but not engaged. Potential to increase adoption with targeted outreach.
+
+================================================================================
+FULL TRANSCRIPT
+================================================================================
+
+[00:00:00] Amanda Thompson: Good to connect. How has Q3 been treating you?
+
+[00:00:20] Customer: Busy as always. Lots of projects competing for attention.
+
+[00:00:50] Amanda Thompson: I can imagine. Where does identity fit in your priorities?
+
+[00:01:20] Customer: It's maintenance mode honestly. We set it up and it works. Not much else to do.
+
+[00:01:50] David Park: That's actually a good sign - means the platform is running smoothly.
+
+[00:02:20] Customer: I suppose so. We have other fires to fight right now.
+
+[00:02:50] Customer: Cloud migration is consuming most of our bandwidth.
+
+[00:03:30] Amanda Thompson: Identity can actually help with cloud migrations. Access Gateway supports hybrid environments.
+
+[00:04:00] Customer: We might look at that eventually. Not a priority right now though.
+
+[00:04:30] Customer: Our current solution handles what we need for the migration.
+
+[00:05:00] David Park: Makes sense. When you're ready to discuss, let us know.
+
+[00:05:30] Customer: Will do. What else is on your agenda today?
+
+[00:06:00] Amanda Thompson: Just wanted to check in and make sure everything is running smoothly.
+
+[00:06:30] Customer: It is. Nothing else really to discuss.
+
+[00:07:00] Amanda Thompson: Understood. We're here if you need anything.
+
+[00:07:30] Customer: Appreciate it. Talk soon.
+
+[END OF TRANSCRIPT]
+================================================================================

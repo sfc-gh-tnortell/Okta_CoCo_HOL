@@ -1,0 +1,70 @@
+================================================================================
+GONG CALL TRANSCRIPT
+================================================================================
+
+CALL METADATA
+-------------
+Call ID: GONG8385672
+Date: 2026-02-14
+Duration: 40 minutes
+Call Type: Escalation Call
+
+ACCOUNT INFORMATION
+-------------------
+Account: Delta Air Lines
+Account ID: ACC000066
+Industry: Transportation
+Location: Atlanta, GA
+Employees: 100,000
+Health Score: At Risk
+
+PARTICIPANTS
+------------
+- Sarah Johnson (Account Executive)
+- Lisa Anderson (Sales Engineer)
+- Director of Security, Delta Air Lines (Customer)
+
+CALL SUMMARY
+------------
+Difficult call addressing customer concerns. Platform issues causing frustration. Customer evaluating alternatives and considering churn.
+
+KEY INSIGHTS
+------------
+CHURN RISK: Customer is frustrated and evaluating competitors. Immediate action required to retain account.
+
+================================================================================
+FULL TRANSCRIPT
+================================================================================
+
+[00:00:00] Sarah Johnson: I appreciate you meeting with me. I know things have been challenging.
+
+[00:00:20] Customer: Challenging doesn't begin to describe it. We've lost confidence in your platform.
+
+[00:01:00] Customer: Last week we had an outage during our busiest period. Employees couldn't log in for 4 hours.
+
+[00:01:45] Lisa Anderson: I saw the incident report. We've identified the root cause and implemented fixes.
+
+[00:02:15] Customer: That's what you said after the last outage. And the one before that.
+
+[00:02:45] Customer: Our CEO had to apologize to the board because employees couldn't access critical systems.
+
+[00:03:30] Sarah Johnson: I understand the severity. We take full responsibility.
+
+[00:04:00] Customer: Responsibility doesn't help me when I'm explaining to leadership why we're still using your product.
+
+[00:04:45] Customer: Microsoft has been calling us weekly. Their pricing is significantly lower.
+
+[00:05:30] Lisa Anderson: We can discuss technical differentiators that justify the investment.
+
+[00:06:00] Customer: At this point, I'm not sure any differentiator is worth this level of disruption.
+
+[00:06:45] Customer: We need a 90-day remediation plan with SLA guarantees, or we're issuing an RFP.
+
+[00:07:30] Sarah Johnson: Let's schedule a meeting with our executive team to discuss a concrete action plan.
+
+[00:08:00] Customer: Fine, but I'm being transparent - my recommendation to leadership will be to switch vendors.
+
+[00:08:30] Customer: You have one chance to change my mind. Don't waste it.
+
+[END OF TRANSCRIPT]
+================================================================================

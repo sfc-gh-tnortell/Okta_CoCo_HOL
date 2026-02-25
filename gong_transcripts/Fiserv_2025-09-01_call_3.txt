@@ -1,0 +1,68 @@
+================================================================================
+GONG CALL TRANSCRIPT
+================================================================================
+
+CALL METADATA
+-------------
+Call ID: GONG9498828
+Date: 2025-09-01
+Duration: 86 minutes
+Call Type: Expansion Discussion
+
+ACCOUNT INFORMATION
+-------------------
+Account: Fiserv
+Account ID: ACC000130
+Industry: Financial Services
+Location: Milwaukee, WI
+Employees: 40,000
+Health Score: Excellent
+
+PARTICIPANTS
+------------
+- Michael Chen (Account Executive)
+- Kevin Martinez (Sales Engineer)
+- Head of Infrastructure, Fiserv (Customer)
+
+CALL SUMMARY
+------------
+Excellent call with engaged customer. Strong platform adoption and high satisfaction. Customer interested in expanding usage and adding new products.
+
+KEY INSIGHTS
+------------
+GROWTH: Customer is a strong advocate. Multiple expansion opportunities identified. Executive sponsorship confirmed.
+
+================================================================================
+FULL TRANSCRIPT
+================================================================================
+
+[00:00:00] Michael Chen: Thanks for making time today. I know you're busy!
+
+[00:00:15] Customer: Always happy to chat with you. We've got some exciting news to share!
+
+[00:00:45] Michael Chen: I love exciting news! What's happening?
+
+[00:01:15] Customer: We just acquired TechCorp - 3,000 new employees! And we want to bring them onto your platform immediately.
+
+[00:02:00] Kevin Martinez: Congratulations on the acquisition! That's a significant growth opportunity for us too.
+
+[00:02:30] Customer: Exactly. We've seen how well your platform scales. Our team is confident we can onboard them within 60 days.
+
+[00:03:15] Michael Chen: That's an aggressive timeline, but definitely achievable with proper planning.
+
+[00:03:45] Customer: Your customer success team has been phenomenal. They've already offered to help with the migration planning.
+
+[00:04:30] Kevin Martinez: We can dedicate additional resources to ensure a smooth transition.
+
+[00:05:00] Customer: That would be great. The CEO is watching this integration closely - it needs to go smoothly.
+
+[00:05:45] Michael Chen: We won't let you down. What's the timeline for contract expansion?
+
+[00:06:15] Customer: Let's get the paperwork started this week. We want to move fast.
+
+[00:06:45] Kevin Martinez: I'll prepare the technical requirements document today.
+
+[00:07:15] Customer: Excellent. This partnership continues to exceed our expectations. Thank you!
+
+[END OF TRANSCRIPT]
+================================================================================

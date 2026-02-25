@@ -1,0 +1,72 @@
+================================================================================
+GONG CALL TRANSCRIPT
+================================================================================
+
+CALL METADATA
+-------------
+Call ID: GONG5213526
+Date: 2025-12-11
+Duration: 45 minutes
+Call Type: Quarterly Business Review
+
+ACCOUNT INFORMATION
+-------------------
+Account: Best Buy
+Account ID: ACC000080
+Industry: Retail
+Location: Richfield, MN
+Employees: 90,000
+Health Score: Excellent
+
+PARTICIPANTS
+------------
+- Sarah Johnson (Account Executive)
+- Lisa Anderson (Sales Engineer)
+- Director of Security, Best Buy (Customer)
+
+CALL SUMMARY
+------------
+Excellent call with engaged customer. Strong platform adoption and high satisfaction. Customer interested in expanding usage and adding new products.
+
+KEY INSIGHTS
+------------
+GROWTH: Customer is a strong advocate. Multiple expansion opportunities identified. Executive sponsorship confirmed.
+
+================================================================================
+FULL TRANSCRIPT
+================================================================================
+
+[00:00:00] Sarah Johnson: Thanks for joining today! How are things going at Best Buy?
+
+[00:00:15] Customer: Fantastic! We're really excited about the progress we've made. The platform has been incredible.
+
+[00:01:00] Sarah Johnson: That's wonderful to hear! What's been working best for your team?
+
+[00:01:30] Customer: The automation has saved us countless hours. Our team loves it. We've reduced onboarding time from 2 weeks to just 2 days!
+
+[00:02:15] Lisa Anderson: That's amazing ROI. How has adoption been across the organization?
+
+[00:02:45] Customer: We're at 98% adoption now, up from 75% last quarter. The user experience is so intuitive that people actually want to use it.
+
+[00:03:30] Sarah Johnson: Excellent! Any areas where we can help drive even more value?
+
+[00:04:00] Customer: Actually yes - we're so happy with the results that we want to expand! We're looking at adding Lifecycle Management and API Access Management.
+
+[00:05:00] Lisa Anderson: That's great news! Both products integrate seamlessly with what you already have.
+
+[00:05:45] Customer: Perfect. Our CFO actually reached out asking why we're not using more of your platform given how well SSO has worked.
+
+[00:06:30] Sarah Johnson: Music to our ears! When can we schedule a call to discuss the expansion?
+
+[00:07:00] Customer: How about next week? I want to move quickly on this. Budget is already approved.
+
+[00:07:30] Lisa Anderson: We can do a technical deep dive on Tuesday if that works?
+
+[00:08:00] Customer: Tuesday is perfect. I'll bring our infrastructure team - they're eager to learn more.
+
+[00:08:30] Sarah Johnson: This is really exciting. Thank you for being such a great partner!
+
+[00:09:00] Customer: Thank you! Your team has been incredibly responsive and helpful. We're happy customers.
+
+[END OF TRANSCRIPT]
+================================================================================

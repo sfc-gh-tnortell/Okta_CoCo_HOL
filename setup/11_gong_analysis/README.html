@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gong Transcript Analysis Guide</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+            color: #333;
+        }
+        h1 {
+            color: #29B5E8;
+            border-bottom: 3px solid #29B5E8;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #1a73e8;
+            margin-top: 40px;
+            border-left: 4px solid #29B5E8;
+            padding-left: 12px;
+        }
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+        code {
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+        }
+        .sql-keyword {
+            color: #569cd6;
+        }
+        .sql-function {
+            color: #dcdcaa;
+        }
+        .sql-string {
+            color: #ce9178;
+        }
+        .sql-comment {
+            color: #6a9955;
+        }
+        .step-box {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .doc-link {
+            display: inline-block;
+            margin-top: 10px;
+            color: #1a73e8;
+            text-decoration: none;
+        }
+        .doc-link:hover {
+            text-decoration: underline;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        th {
+            background: #29B5E8;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #1a73e8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        ol {
+            background: white;
+            padding: 20px 20px 20px 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        li {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Gong Transcript Analysis: Step-by-Step Guide for Snowsight</h1>
+
+<div class="info-box">
+    <strong>Overview:</strong> This guide sets up Cortex Search on Gong transcripts and stores only sentiment metadata (not full transcript content in tables).
+</div>
+
+<hr>
+
+<h2>Step 1: Upload Transcripts to a Stage</h2>
+<div class="step-box">
+<pre><code><span class="sql-comment">-- Create internal stage for Gong transcripts</span>
+<span class="sql-keyword">CREATE OR REPLACE</span> <span class="sql-keyword">STAGE</span> PROD.RAW.GONG_TRANSCRIPTS_STAGE
+    <span class="sql-keyword">DIRECTORY</span> = (<span class="sql-keyword">ENABLE</span> = <span class="sql-keyword">TRUE</span>)
+    <span class="sql-keyword">ENCRYPTION</span> = (<span class="sql-keyword">TYPE</span> = <span class="sql-string">'SNOWFLAKE_SSE'</span>);</code></pre>
+
+<p><strong>Upload files via Snowsight:</strong></p>
+<ol>
+    <li>Navigate to <strong>Data → Databases → PROD → RAW → Stages</strong></li>
+    <li>Click on <code>GONG_TRANSCRIPTS_STAGE</code></li>
+    <li>Click <strong>+ Files</strong> → Select all <code>.txt</code> files from <code>gong_transcripts/</code></li>
+    <li>Click <strong>Upload</strong></li>
+</ol>
+
+<pre><code><span class="sql-comment">-- Refresh directory after upload</span>
+<span class="sql-keyword">ALTER STAGE</span> PROD.RAW.GONG_TRANSCRIPTS_STAGE <span class="sql-keyword">REFRESH</span>;
+
+<span class="sql-comment">-- Verify files</span>
+<span class="sql-keyword">SELECT</span> * <span class="sql-keyword">FROM</span> <span class="sql-function">DIRECTORY</span>(@PROD.RAW.GONG_TRANSCRIPTS_STAGE) <span class="sql-keyword">LIMIT</span> 10;</code></pre>
+
+<a class="doc-link" href="https://docs.snowflake.com/en/user-guide/data-load-local-file-system-create-stage" target="_blank">📖 Stage Documentation</a>
+</div>
+
+<hr>
+
+<h2>Step 2: Create Source Table for Cortex Search</h2>
+<div class="step-box">
+<div class="info-box">
+    <strong>Note:</strong> This table is the source for the Cortex Search Service. Do NOT drop it - the search service will refresh from this table when new transcripts are added.
+</div>
+
+<p>Run these as <strong>two separate statements</strong>:</p>
+
+<pre><code><span class="sql-comment">-- Step 2a: Create a file format for text files</span>
+<span class="sql-keyword">CREATE OR REPLACE FILE FORMAT</span> PROD.RAW.TEXT_FORMAT
+    <span class="sql-keyword">TYPE</span> = <span class="sql-string">'CSV'</span>
+    <span class="sql-keyword">FIELD_DELIMITER</span> = <span class="sql-keyword">NONE</span>
+    <span class="sql-keyword">RECORD_DELIMITER</span> = <span class="sql-keyword">NONE</span>;</code></pre>
+
+<pre><code><span class="sql-comment">-- Step 2b: Create the source table</span>
+<span class="sql-keyword">CREATE OR REPLACE TABLE</span> PROD.RAW.GONG_TRANSCRIPT_SOURCE <span class="sql-keyword">AS</span>
+<span class="sql-keyword">SELECT</span> 
+    METADATA$FILENAME <span class="sql-keyword">AS</span> FILE_NAME,
+    <span class="sql-function">REPLACE</span>(<span class="sql-function">SPLIT_PART</span>(METADATA$FILENAME, <span class="sql-string">'_call_'</span>, 1), <span class="sql-string">'_'</span>, <span class="sql-string">' '</span>) <span class="sql-keyword">AS</span> ACCOUNT_NAME,
+    <span class="sql-function">TRY_TO_DATE</span>(
+        <span class="sql-function">REGEXP_SUBSTR</span>(METADATA$FILENAME, <span class="sql-string">'\\d{4}-\\d{2}-\\d{2}'</span>), 
+        <span class="sql-string">'YYYY-MM-DD'</span>
+    ) <span class="sql-keyword">AS</span> CALL_DATE,
+    $1::<span class="sql-keyword">VARCHAR</span> <span class="sql-keyword">AS</span> CONTENT
+<span class="sql-keyword">FROM</span> @PROD.RAW.GONG_TRANSCRIPTS_STAGE
+    (<span class="sql-keyword">FILE_FORMAT</span> => <span class="sql-string">'PROD.RAW.TEXT_FORMAT'</span>, <span class="sql-keyword">PATTERN</span> => <span class="sql-string">'.*\\.txt'</span>);</code></pre>
+
+<p><em>This table stores content temporarily for Cortex Search indexing. You can drop it after Step 4 to save storage.</em></p>
+</div>
+
+<hr>
+
+<h2>Step 3: Create Cortex Search Service</h2>
+<div class="step-box">
+<p>Create the search service on the source table:</p>
+
+<pre><code><span class="sql-keyword">CREATE OR REPLACE</span> <span class="sql-keyword">CORTEX SEARCH SERVICE</span> PROD.RAW.GONG_SEARCH_SERVICE
+    <span class="sql-keyword">ON</span> CONTENT
+    <span class="sql-keyword">ATTRIBUTES</span> FILE_NAME, ACCOUNT_NAME, CALL_DATE
+    <span class="sql-keyword">WAREHOUSE</span> = COMPUTE_WH
+    <span class="sql-keyword">TARGET_LAG</span> = <span class="sql-string">'1 hour'</span>
+    <span class="sql-keyword">AS</span> (
+        <span class="sql-keyword">SELECT</span> 
+            FILE_NAME,
+            ACCOUNT_NAME,
+            CALL_DATE,
+            CONTENT
+        <span class="sql-keyword">FROM</span> PROD.RAW.GONG_TRANSCRIPT_SOURCE
+    );</code></pre>
+
+<a class="doc-link" href="https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-search/cortex-search-overview" target="_blank">📖 Cortex Search Documentation</a>
+
+<p><strong>To add to Customer 360 Agent:</strong></p>
+<pre><code>tools:
+  - tool_spec:
+      type: cortex_search
+      name: gong_transcript_search
+      spec:
+        service_name: PROD.RAW.GONG_SEARCH_SERVICE
+        max_results: 5
+        filter_columns:
+          - ACCOUNT_NAME
+          - CALL_DATE</code></pre>
+</div>
+
+<hr>
+
+<h2>Step 4: Create Sentiment Table (Metadata Only)</h2>
+<div class="step-box">
+<p>Extract sentiment from the source table, storing only metadata (no content):</p>
+
+<pre><code><span class="sql-keyword">CREATE OR REPLACE TABLE</span> PROD.RAW.GONG_CALL_SENTIMENT <span class="sql-keyword">AS</span>
+<span class="sql-keyword">SELECT</span>
+    FILE_NAME,
+    ACCOUNT_NAME,
+    CALL_DATE,
+    <span class="sql-function">REPLACE</span>(<span class="sql-function">SPLIT_PART</span>(FILE_NAME, <span class="sql-string">'_call_'</span>, 2), <span class="sql-string">'.txt'</span>, <span class="sql-string">''</span>)::<span class="sql-keyword">INT</span> <span class="sql-keyword">AS</span> CALL_NUMBER,
+    <span class="sql-function">AI_SENTIMENT</span>(CONTENT):categories[0]:sentiment::<span class="sql-keyword">VARCHAR</span> <span class="sql-keyword">AS</span> SENTIMENT_CATEGORY
+<span class="sql-keyword">FROM</span> PROD.RAW.GONG_TRANSCRIPT_SOURCE;</code></pre>
+
+<a class="doc-link" href="https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions#sentiment" target="_blank">📖 SENTIMENT Function Documentation</a>
+
+<div class="info-box">
+    <strong>Important:</strong> Keep the source table - the Cortex Search Service refreshes from it when new transcripts are added.
+</div>
+</div>
+
+<hr>
+
+<h2>Step 5: Create Account-Level Sentiment Summary</h2>
+<div class="step-box">
+<pre><code><span class="sql-keyword">CREATE OR REPLACE TABLE</span> PROD.FINAL.ACCOUNT_CALL_SENTIMENT <span class="sql-keyword">AS</span>
+<span class="sql-keyword">SELECT</span>
+    ACCOUNT_NAME,
+    <span class="sql-function">COUNT</span>(*) <span class="sql-keyword">AS</span> TOTAL_CALLS,
+    <span class="sql-function">SUM</span>(<span class="sql-keyword">CASE WHEN</span> SENTIMENT_CATEGORY = <span class="sql-string">'positive'</span> <span class="sql-keyword">THEN</span> 1 <span class="sql-keyword">ELSE</span> 0 <span class="sql-keyword">END</span>) <span class="sql-keyword">AS</span> POSITIVE_CALLS,
+    <span class="sql-function">SUM</span>(<span class="sql-keyword">CASE WHEN</span> SENTIMENT_CATEGORY = <span class="sql-string">'negative'</span> <span class="sql-keyword">THEN</span> 1 <span class="sql-keyword">ELSE</span> 0 <span class="sql-keyword">END</span>) <span class="sql-keyword">AS</span> NEGATIVE_CALLS,
+    <span class="sql-function">SUM</span>(<span class="sql-keyword">CASE WHEN</span> SENTIMENT_CATEGORY = <span class="sql-string">'neutral'</span> <span class="sql-keyword">THEN</span> 1 <span class="sql-keyword">ELSE</span> 0 <span class="sql-keyword">END</span>) <span class="sql-keyword">AS</span> NEUTRAL_CALLS,
+    <span class="sql-function">ROUND</span>(<span class="sql-function">SUM</span>(<span class="sql-keyword">CASE WHEN</span> SENTIMENT_CATEGORY = <span class="sql-string">'positive'</span> <span class="sql-keyword">THEN</span> 1 
+                   <span class="sql-keyword">WHEN</span> SENTIMENT_CATEGORY = <span class="sql-string">'negative'</span> <span class="sql-keyword">THEN</span> -1 
+                   <span class="sql-keyword">ELSE</span> 0 <span class="sql-keyword">END</span>)::<span class="sql-keyword">FLOAT</span> / <span class="sql-function">COUNT</span>(*), 3) <span class="sql-keyword">AS</span> SENTIMENT_SCORE,
+    <span class="sql-function">MAX</span>(CALL_DATE) <span class="sql-keyword">AS</span> LAST_CALL_DATE
+<span class="sql-keyword">FROM</span> PROD.RAW.GONG_CALL_SENTIMENT
+<span class="sql-keyword">GROUP BY</span> ACCOUNT_NAME;</code></pre>
+</div>
+
+<hr>
+
+<h2>Step 6: Create Composite Health Score</h2>
+<div class="step-box">
+<pre><code><span class="sql-keyword">CREATE OR REPLACE VIEW</span> PROD.FINAL.ACCOUNT_HEALTH_SCORE <span class="sql-keyword">AS</span>
+<span class="sql-keyword">WITH</span> account_products <span class="sql-keyword">AS</span> (
+    <span class="sql-keyword">SELECT</span>
+        a.ACCOUNT_NAME,
+        <span class="sql-function">COUNT</span>(<span class="sql-keyword">DISTINCT</span> s.PRODUCT_ID) <span class="sql-keyword">AS</span> PRODUCTS_OWNED,
+        14 <span class="sql-keyword">AS</span> TOTAL_PRODUCTS,
+        <span class="sql-function">COUNT</span>(<span class="sql-keyword">DISTINCT</span> s.PRODUCT_ID) / 14.0 <span class="sql-keyword">AS</span> PRODUCT_COVERAGE
+    <span class="sql-keyword">FROM</span> PROD.FINAL.ACCOUNT_DAILY a
+    <span class="sql-keyword">LEFT JOIN</span> PROD.FINAL.SUBSCRIPTION_DAILY s <span class="sql-keyword">ON</span> a.ACCOUNT_ID = s.ACCOUNT_ID
+    <span class="sql-keyword">GROUP BY</span> a.ACCOUNT_NAME
+),
+industry_benchmark <span class="sql-keyword">AS</span> (
+    <span class="sql-keyword">SELECT</span>
+        a.INDUSTRY,
+        <span class="sql-function">AVG</span>(ap.PRODUCT_COVERAGE) <span class="sql-keyword">AS</span> AVG_INDUSTRY_COVERAGE
+    <span class="sql-keyword">FROM</span> PROD.FINAL.ACCOUNT_DAILY a
+    <span class="sql-keyword">JOIN</span> account_products ap <span class="sql-keyword">ON</span> a.ACCOUNT_NAME = ap.ACCOUNT_NAME
+    <span class="sql-keyword">GROUP BY</span> a.INDUSTRY
+)
+<span class="sql-keyword">SELECT</span>
+    a.ACCOUNT_NAME,
+    a.INDUSTRY,
+    
+    <span class="sql-comment">-- Sentiment Score (0-100, weighted 50%)</span>
+    <span class="sql-function">COALESCE</span>(<span class="sql-function">ROUND</span>((s.SENTIMENT_SCORE + 1) * 50, 1), 50) <span class="sql-keyword">AS</span> SENTIMENT_SCORE_NORMALIZED,
+    
+    <span class="sql-comment">-- Product Whitespace Score (0-100, weighted 20%)</span>
+    <span class="sql-comment">-- Boosted: multiply by 3 to give credit for having any products</span>
+    <span class="sql-function">LEAST</span>(<span class="sql-function">ROUND</span>(p.PRODUCT_COVERAGE * 300, 1), 100) <span class="sql-keyword">AS</span> PRODUCT_COVERAGE_SCORE,
+    
+    <span class="sql-comment">-- Peer Comparison Score (0-100, weighted 30%)</span>
+    <span class="sql-comment">-- Boosted: accounts at or above average get 70-100, below average get 40-70</span>
+    <span class="sql-function">ROUND</span>(<span class="sql-keyword">CASE</span> 
+        <span class="sql-keyword">WHEN</span> p.PRODUCT_COVERAGE >= ib.AVG_INDUSTRY_COVERAGE <span class="sql-keyword">THEN</span> 
+            70 + (<span class="sql-function">LEAST</span>((p.PRODUCT_COVERAGE - ib.AVG_INDUSTRY_COVERAGE) / <span class="sql-function">NULLIF</span>(ib.AVG_INDUSTRY_COVERAGE, 0), 1) * 30)
+        <span class="sql-keyword">ELSE</span> 
+            40 + (30 * (p.PRODUCT_COVERAGE / <span class="sql-function">NULLIF</span>(ib.AVG_INDUSTRY_COVERAGE, 0)))
+    <span class="sql-keyword">END</span>, 1) <span class="sql-keyword">AS</span> PEER_COMPARISON_SCORE,
+    
+    <span class="sql-comment">-- Composite Health Score (rebalanced weights)</span>
+    <span class="sql-function">ROUND</span>(
+        (<span class="sql-function">COALESCE</span>((s.SENTIMENT_SCORE + 1) * 50, 50) * 0.50) +
+        (<span class="sql-function">LEAST</span>(p.PRODUCT_COVERAGE * 300, 100) * 0.20) +
+        (<span class="sql-keyword">CASE</span> 
+            <span class="sql-keyword">WHEN</span> p.PRODUCT_COVERAGE >= ib.AVG_INDUSTRY_COVERAGE <span class="sql-keyword">THEN</span> 
+                70 + (<span class="sql-function">LEAST</span>((p.PRODUCT_COVERAGE - ib.AVG_INDUSTRY_COVERAGE) / <span class="sql-function">NULLIF</span>(ib.AVG_INDUSTRY_COVERAGE, 0), 1) * 30)
+            <span class="sql-keyword">ELSE</span> 
+                40 + (30 * (p.PRODUCT_COVERAGE / <span class="sql-function">NULLIF</span>(ib.AVG_INDUSTRY_COVERAGE, 0)))
+        <span class="sql-keyword">END</span> * 0.30)
+    , 1) <span class="sql-keyword">AS</span> COMPOSITE_HEALTH_SCORE,
+    
+    <span class="sql-keyword">CASE</span> 
+        <span class="sql-keyword">WHEN</span> COMPOSITE_HEALTH_SCORE >= 70 <span class="sql-keyword">THEN</span> <span class="sql-string">'Excellent'</span>
+        <span class="sql-keyword">WHEN</span> COMPOSITE_HEALTH_SCORE >= 60 <span class="sql-keyword">THEN</span> <span class="sql-string">'Good'</span>
+        <span class="sql-keyword">WHEN</span> COMPOSITE_HEALTH_SCORE >= 50 <span class="sql-keyword">THEN</span> <span class="sql-string">'At Risk'</span>
+        <span class="sql-keyword">ELSE</span> <span class="sql-string">'Critical'</span>
+    <span class="sql-keyword">END AS</span> HEALTH_CATEGORY,
+    
+    s.TOTAL_CALLS,
+    s.POSITIVE_CALLS,
+    s.NEGATIVE_CALLS,
+    p.PRODUCTS_OWNED,
+    p.TOTAL_PRODUCTS
+    
+<span class="sql-keyword">FROM</span> PROD.FINAL.ACCOUNT_DAILY a
+<span class="sql-keyword">LEFT JOIN</span> PROD.FINAL.ACCOUNT_CALL_SENTIMENT s <span class="sql-keyword">ON</span> a.ACCOUNT_NAME = s.ACCOUNT_NAME
+<span class="sql-keyword">LEFT JOIN</span> account_products p <span class="sql-keyword">ON</span> a.ACCOUNT_NAME = p.ACCOUNT_NAME
+<span class="sql-keyword">LEFT JOIN</span> industry_benchmark ib <span class="sql-keyword">ON</span> a.INDUSTRY = ib.INDUSTRY;</code></pre>
+</div>
+
+<hr>
+
+<h2>Step 7: Add Health Score to Semantic View for Cortex Analyst</h2>
+<p>Update the semantic view used by the Customer 360 Agent to include the new health score data.</p>
+
+<h3>7a: Add the ACCOUNT_HEALTH_SCORE table to your semantic view YAML</h3>
+<p>Add this table definition to the <code>tables</code> section of your semantic model:</p>
+
+<div class="step-box">
+<pre><code>  - name: ACCOUNT_HEALTH_SCORE
+    description: Composite account health scores combining sentiment, product coverage, and peer comparison
+    base_table:
+      database: PROD
+      schema: FINAL
+      table: ACCOUNT_HEALTH_SCORE
+    dimensions:
+      - name: ACCOUNT_NAME
+        expr: ACCOUNT_NAME
+        description: Customer account name
+        data_type: VARCHAR
+      - name: INDUSTRY
+        expr: INDUSTRY
+        description: Industry classification
+        data_type: VARCHAR
+      - name: HEALTH_CATEGORY
+        expr: HEALTH_CATEGORY
+        description: Health status category (Excellent, Good, At Risk, Critical)
+        data_type: VARCHAR
+    measures:
+      - name: SENTIMENT_SCORE
+        expr: SENTIMENT_SCORE_NORMALIZED
+        description: Normalized sentiment score from call transcripts (0-100)
+        data_type: NUMBER
+      - name: PRODUCT_COVERAGE_SCORE
+        expr: PRODUCT_COVERAGE_SCORE
+        description: Product whitespace score based on products owned (0-100)
+        data_type: NUMBER
+      - name: PEER_COMPARISON_SCORE
+        expr: PEER_COMPARISON_SCORE
+        description: Score comparing account to industry peers (0-100)
+        data_type: NUMBER
+      - name: COMPOSITE_HEALTH_SCORE
+        expr: COMPOSITE_HEALTH_SCORE
+        description: Weighted composite health score (50% sentiment, 20% product, 30% peer)
+        data_type: NUMBER
+      - name: TOTAL_CALLS
+        expr: TOTAL_CALLS
+        description: Total number of Gong calls analyzed
+        data_type: NUMBER
+      - name: POSITIVE_CALLS
+        expr: POSITIVE_CALLS
+        description: Number of calls with positive sentiment
+        data_type: NUMBER
+      - name: NEGATIVE_CALLS
+        expr: NEGATIVE_CALLS
+        description: Number of calls with negative sentiment
+        data_type: NUMBER
+      - name: PRODUCTS_OWNED
+        expr: PRODUCTS_OWNED
+        description: Count of distinct products owned by account
+        data_type: NUMBER</code></pre>
+</div>
+
+<h3>7b: Recreate the Semantic View</h3>
+<p>After updating your YAML file, recreate the semantic view:</p>
+
+<div class="step-box">
+<pre><code><span class="sql-keyword">CREATE OR REPLACE</span> SEMANTIC VIEW PROD.FINAL.CUSTOMER_360_SEMANTIC_VIEW
+  <span class="sql-keyword">FROM</span> @PROD.RAW.SEMANTIC_STAGE/customer_360_semantic_model.yaml;</code></pre>
+</div>
+
+<h3>7c: Verify the Health Score Data is Accessible</h3>
+<p>Test a query through the semantic view:</p>
+
+<div class="step-box">
+<pre><code><span class="sql-comment">-- Sample questions for Cortex Analyst:</span>
+<span class="sql-comment">-- "Show me accounts with Critical or At Risk health scores"</span>
+<span class="sql-comment">-- "What is the average health score by industry?"</span>
+<span class="sql-comment">-- "Which accounts have negative call sentiment but high product coverage?"</span></code></pre>
+</div>
+
+<hr>
+
+<h2>Summary Checklist</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Step</th>
+            <th>Action</th>
+            <th>Object Created</th>
+            <th>Stores Content?</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>1</td>
+            <td>Upload transcript files</td>
+            <td><code>@PROD.RAW.GONG_TRANSCRIPTS_STAGE</code></td>
+            <td>Files only</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>Create source table</td>
+            <td><code>PROD.RAW.GONG_TRANSCRIPT_SOURCE</code></td>
+            <td>Yes (required for search refresh)</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td>Create search service</td>
+            <td><code>PROD.RAW.GONG_SEARCH_SERVICE</code></td>
+            <td>Indexed</td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td>Extract sentiment</td>
+            <td><code>PROD.RAW.GONG_CALL_SENTIMENT</code></td>
+            <td><strong>No</strong> - metadata + score only</td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td>Aggregate by account</td>
+            <td><code>PROD.FINAL.ACCOUNT_CALL_SENTIMENT</code></td>
+            <td>No</td>
+        </tr>
+        <tr>
+            <td>6</td>
+            <td>Composite health score</td>
+            <td><code>PROD.FINAL.ACCOUNT_HEALTH_SCORE</code></td>
+            <td>No</td>
+        </tr>
+        <tr>
+            <td>7</td>
+            <td>Add to semantic view</td>
+            <td><code>PROD.FINAL.CUSTOMER_360_SEMANTIC_VIEW</code></td>
+            <td>No - YAML update</td>
+        </tr>
+    </tbody>
+</table>
+
+<hr>
+
+<h2>Key Design Decision</h2>
+<div class="info-box">
+    <p><strong>Transcript content</strong> lives only in:</p>
+    <ol>
+        <li>Stage files (source of truth)</li>
+        <li>Cortex Search index (for semantic search)</li>
+    </ol>
+    <p><strong>Tables store only:</strong> file name, account, date, sentiment score</p>
+    <p>To read actual transcript content → use Cortex Search or query the stage directly</p>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,76 @@
+================================================================================
+GONG CALL TRANSCRIPT
+================================================================================
+
+CALL METADATA
+-------------
+Call ID: GONG3164587
+Date: 2025-08-30
+Duration: 88 minutes
+Call Type: Check-in Call
+
+ACCOUNT INFORMATION
+-------------------
+Account: CVS Health
+Account ID: ACC000007
+Industry: Healthcare
+Location: Woonsocket, RI
+Employees: 300,000
+Health Score: Healthy
+
+PARTICIPANTS
+------------
+- James Williams (Account Executive)
+- Chris Taylor (Sales Engineer)
+- VP of IT, CVS Health (Customer)
+
+CALL SUMMARY
+------------
+Routine check-in with stable customer. Platform working as expected. No immediate concerns but limited engagement.
+
+KEY INSIGHTS
+------------
+STABLE: Customer is satisfied but not engaged. Potential to increase adoption with targeted outreach.
+
+================================================================================
+FULL TRANSCRIPT
+================================================================================
+
+[00:00:00] James Williams: Thanks for meeting today. How's everything going at CVS Health?
+
+[00:00:15] Customer: Things are steady. No major changes since we last spoke.
+
+[00:00:45] James Williams: Good to hear. Any feedback on the platform?
+
+[00:01:15] Customer: It's working fine. Nothing to report really. Users seem satisfied.
+
+[00:01:45] Chris Taylor: Are you utilizing all the features available to you?
+
+[00:02:15] Customer: We're using what we need. Haven't explored much beyond the basics.
+
+[00:02:45] James Williams: There might be some capabilities that could add value. Want me to walk through them?
+
+[00:03:15] Customer: Sure, I have a few minutes. But we're not looking to expand right now.
+
+[00:03:45] Customer: Budget is tight and we need to justify any additional spend carefully.
+
+[00:04:30] Chris Taylor: Understood. Even within your current license, there are features you might not be using.
+
+[00:05:00] Customer: Like what?
+
+[00:05:30] Chris Taylor: For example, automated access reviews could save your team several hours each month.
+
+[00:06:00] Customer: Interesting. We've been doing those manually. I'll take a look.
+
+[00:06:30] James Williams: When is your renewal coming up?
+
+[00:07:00] Customer: Six months out. We'll evaluate options when the time comes.
+
+[00:07:30] James Williams: Fair enough. Anything else we can help with today?
+
+[00:08:00] Customer: Not really. Just keep the platform running smoothly and we're good.
+
+[00:08:30] James Williams: Will do. Thanks for your time today.
+
+[END OF TRANSCRIPT]
+================================================================================
