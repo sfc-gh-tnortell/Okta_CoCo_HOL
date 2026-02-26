@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Okta Activity Logs Pipeline with Snowflake Postgres & Openflow</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            max-width: 950px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #29B5E8;
+            border-bottom: 3px solid #29B5E8;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #1a73e8;
+            margin-top: 30px;
+            border-left: 4px solid #29B5E8;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #333;
+            margin-top: 20px;
+        }
+        .step-box {
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        .step-box code {
+            color: #d4d4d4;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            white-space: pre;
+            display: block;
+        }
+        .info-box {
+            background-color: #e3f2fd;
+            border-left: 4px solid #1a73e8;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .warning-box {
+            background-color: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .goal-box {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #29B5E8;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .comment { color: #6a9955; }
+        .function { color: #dcdcaa; }
+        a {
+            color: #1a73e8;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        code.inline {
+            background-color: #e8e8e8;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9em;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #ddd;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Okta Activity Logs Pipeline with Snowflake Postgres & Openflow</h1>
+    
+    <div class="goal-box">
+        <strong>Goal:</strong> Track product adoption by showing license assignment rates and actual usage through authentication logs.
+    </div>
+
+    <hr>
+
+    <h2>Prerequisites</h2>
+    <ul>
+        <li>Snowflake account with ACCOUNTADMIN role</li>
+        <li>Existing Openflow deployment (<code class="inline">Openflow_Deployment</code>)</li>
+        <li>Completed base setup (accounts, subscriptions, products in PROD schema)</li>
+    </ul>
+
+    <hr>
+
+    <h2>Step 1: Create Network Rule and Postgres Instance</h2>
+
+    <h3>1a: Create Network Rule (Required)</h3>
+    
+    <div class="warning-box">
+        <strong>Important:</strong> Snowflake Postgres requires a network rule to allow external connections. Without this, you won't be able to connect from DBeaver, psql, or other tools.
+    </div>
+    
+    <p>Run this in Snowflake:</p>
+    
+    <div class="step-box">
+        <code><span class="comment">-- Create schema for network objects</span>
+<span class="keyword">USE ROLE</span> SYSADMIN;
+<span class="keyword">CREATE SCHEMA IF NOT EXISTS</span> PROD.NETWORK;
+
+<span class="comment">-- Switch to ACCOUNTADMIN for network rule creation</span>
+<span class="keyword">USE ROLE</span> ACCOUNTADMIN;
+
+<span class="comment">-- Create network rule allowing all IPs (for demo purposes)</span>
+<span class="keyword">CREATE OR REPLACE</span> NETWORK RULE PROD.NETWORK.POSTGRES_ACCESS_RULE
+  TYPE = IPV4
+  MODE = POSTGRES_INGRESS
+  VALUE_LIST = (<span class="string">'0.0.0.0/0'</span>);
+
+<span class="comment">-- Create network policy referencing the rule</span>
+<span class="keyword">CREATE OR REPLACE</span> NETWORK POLICY POSTGRES_ACCESS_POLICY
+  ALLOWED_NETWORK_RULE_LIST = (<span class="string">'PROD.NETWORK.POSTGRES_ACCESS_RULE'</span>);
+
+<span class="comment">-- Verify the network rule</span>
+<span class="keyword">SHOW</span> NETWORK RULES <span class="keyword">IN SCHEMA</span> PROD.NETWORK;
+<span class="keyword">SHOW</span> NETWORK POLICIES;</code>
+    </div>
+
+    <h3>1b: Create Postgres Instance via Snowsight</h3>
+    <ol>
+        <li>Sign in to <strong>Snowsight</strong></li>
+        <li>Navigate to <strong>Data</strong> > <strong>Databases</strong> > click <strong>+ Database</strong></li>
+        <li>Select <strong>Postgres</strong> as the database type</li>
+        <li>Configure:
+            <ul>
+                <li><strong>Name:</strong> <code class="inline">okta_activity_logs</code></li>
+                <li><strong>Compute Family:</strong> BURST_S (Burstable, small)</li>
+                <li><strong>Storage:</strong> 25 GB</li>
+                <li><strong>Postgres Version:</strong> 18</li>
+                <li><strong>Network Policy:</strong> Select <code class="inline">POSTGRES_ACCESS_POLICY</code></li>
+            </ul>
+        </li>
+        <li>Click <strong>Create</strong> and save the connection credentials securely</li>
+    </ol>
+
+    <h3>1c: Verify Network Access</h3>
+    <p>After creating the instance, test connectivity:</p>
+    
+    <div class="step-box">
+        <code><span class="comment"># Get the connection string from DESCRIBE POSTGRES INSTANCE output</span>
+<span class="comment"># Format: postgres://snowflake_admin:&lt;password&gt;@&lt;host&gt;:5432/postgres</span>
+
+<span class="comment"># Test connection</span>
+psql postgres://snowflake_admin:****@&lt;your-instance&gt;.postgres.snowflake.app:5432/postgres -c "SELECT version();"</code>
+    </div>
+    
+    <div class="info-box">
+        <strong>Troubleshooting:</strong> If connection fails, verify:
+        <ol>
+            <li>The network policy is attached to the Postgres instance</li>
+            <li>Port 5432 is not blocked by your firewall</li>
+        </ol>
+    </div>
+
+    <h3>1d: Enable Replication for CDC</h3>
+    <p>Openflow CDC requires the database user to have replication privileges. Run this in your Postgres instance:</p>
+    
+    <div class="step-box">
+        <code><span class="comment">-- Enable replication for the admin user (required for Openflow CDC)</span>
+<span class="keyword">ALTER USER</span> snowflake_admin <span class="keyword">WITH</span> REPLICATION;</code>
+    </div>
+
+    <h3>1e: Create Publication for CDC</h3>
+    <p>After creating the tables (Step 2), you must create a publication for CDC replication. Run this in your Postgres instance:</p>
+    
+    <div class="step-box">
+        <code><span class="comment">-- Create publication for all tables in public schema (required for Openflow CDC)</span>
+<span class="keyword">CREATE PUBLICATION</span> openflow_publication <span class="keyword">FOR TABLES IN SCHEMA</span> public;
+
+<span class="comment">-- Verify the publication</span>
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> pg_publication;</code>
+    </div>
+    
+    <div class="info-box">
+        <strong>Note:</strong> Run this after Step 2 (Create Postgres Tables) since the publication needs tables to exist.
+    </div>
+    
+    <p><strong>Reference:</strong> <a href="https://docs.snowflake.com/en/user-guide/snowflake-postgres/about" target="_blank">Snowflake Postgres Documentation</a></p>
+
+    <hr>
+
+    <h2>Step 2: Create Postgres Tables</h2>
+    
+    <p>Connect to your Postgres instance using psql or a GUI tool:</p>
+    
+    <div class="step-box">
+        <code>psql postgres://snowflake_admin:****@&lt;your-instance&gt;.postgres.snowflake.app:5432/postgres</code>
+    </div>
+
+    <h3>2a: Create Users Table</h3>
+    <p>Maps company users to accounts. User count should be 70-100% of subscription license quantity.</p>
+    
+    <div class="step-box">
+        <code><span class="comment">-- Users table: Company user profiles</span>
+<span class="keyword">CREATE TABLE</span> users (
+    user_id SERIAL <span class="keyword">PRIMARY KEY</span>,
+    account_id <span class="keyword">VARCHAR</span>(20) <span class="keyword">NOT NULL</span>,
+    email <span class="keyword">VARCHAR</span>(100) <span class="keyword">UNIQUE NOT NULL</span>,
+    first_name <span class="keyword">VARCHAR</span>(50),
+    last_name <span class="keyword">VARCHAR</span>(50),
+    job_title <span class="keyword">VARCHAR</span>(100),
+    department <span class="keyword">VARCHAR</span>(50),
+    employee_id <span class="keyword">VARCHAR</span>(20),
+    is_active <span class="keyword">BOOLEAN DEFAULT</span> true,
+    created_at <span class="keyword">TIMESTAMP DEFAULT CURRENT_TIMESTAMP</span>,
+    updated_at <span class="keyword">TIMESTAMP DEFAULT CURRENT_TIMESTAMP</span>
+);
+
+<span class="keyword">CREATE INDEX</span> idx_users_account <span class="keyword">ON</span> users(account_id);
+<span class="keyword">CREATE INDEX</span> idx_users_email <span class="keyword">ON</span> users(email);</code>
+    </div>
+
+    <h3>2b: Create Product User Assignment Table</h3>
+    <p>Maps users to licensed products (SSO & MFA focus).</p>
+    
+    <div class="step-box">
+        <code><span class="comment">-- Product assignments: Which users are assigned to which products</span>
+<span class="keyword">CREATE TABLE</span> product_user_assignment (
+    assignment_id SERIAL <span class="keyword">PRIMARY KEY</span>,
+    user_id <span class="keyword">INT NOT NULL REFERENCES</span> users(user_id),
+    product_code <span class="keyword">VARCHAR</span>(10) <span class="keyword">NOT NULL</span>,  <span class="comment">-- SSO, MFA</span>
+    assigned_date <span class="keyword">DATE NOT NULL DEFAULT CURRENT_DATE</span>,
+    expiration_date <span class="keyword">DATE</span>,
+    assignment_status <span class="keyword">VARCHAR</span>(20) <span class="keyword">DEFAULT</span> <span class="string">'active'</span>,  <span class="comment">-- active, revoked, expired</span>
+    assigned_by <span class="keyword">VARCHAR</span>(100),
+    created_at <span class="keyword">TIMESTAMP DEFAULT CURRENT_TIMESTAMP</span>,
+    
+    <span class="keyword">UNIQUE</span>(user_id, product_code)
+);
+
+<span class="keyword">CREATE INDEX</span> idx_assignments_user <span class="keyword">ON</span> product_user_assignment(user_id);
+<span class="keyword">CREATE INDEX</span> idx_assignments_product <span class="keyword">ON</span> product_user_assignment(product_code);
+<span class="keyword">CREATE INDEX</span> idx_assignments_status <span class="keyword">ON</span> product_user_assignment(assignment_status);</code>
+    </div>
+
+    <h3>2c: Create Device Authentication Logs Table (Semi-structured JSON)</h3>
+    
+    <div class="step-box">
+        <code><span class="comment">-- Authentication logs: Semi-structured device auth events</span>
+<span class="keyword">CREATE TABLE</span> device_auth_logs (
+    log_id SERIAL <span class="keyword">PRIMARY KEY</span>,
+    user_id <span class="keyword">INT NOT NULL REFERENCES</span> users(user_id),
+    event_timestamp <span class="keyword">TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP</span>,
+    auth_event JSONB <span class="keyword">NOT NULL</span>
+);
+
+<span class="keyword">CREATE INDEX</span> idx_auth_logs_user <span class="keyword">ON</span> device_auth_logs(user_id);
+<span class="keyword">CREATE INDEX</span> idx_auth_logs_timestamp <span class="keyword">ON</span> device_auth_logs(event_timestamp);
+<span class="keyword">CREATE INDEX</span> idx_auth_logs_event <span class="keyword">ON</span> device_auth_logs <span class="keyword">USING</span> GIN(auth_event);</code>
+    </div>
+
+    <div class="info-box">
+        <strong>JSONB Structure:</strong> The <code class="inline">auth_event</code> column contains rich device and authentication data including:
+        <ul>
+            <li><strong>auth_type:</strong> SSO or MFA</li>
+            <li><strong>auth_status:</strong> success, failure, denied, challenge</li>
+            <li><strong>device:</strong> type, manufacturer, model, OS, browser</li>
+            <li><strong>network:</strong> IP address, IP type, ISP</li>
+            <li><strong>geo_location:</strong> city, state, country, lat/long, timezone</li>
+            <li><strong>session:</strong> session_id, is_new_device, risk_score, risk_factors</li>
+            <li><strong>mfa_details:</strong> method, provider, challenge_type (MFA only)</li>
+            <li><strong>failure_details:</strong> reason, attempt_count, locked_out (failures only)</li>
+        </ul>
+    </div>
+
+    <hr>
+
+    <h2>Step 3: Generate Sample Data</h2>
+    
+    <p>Execute the <code class="inline">generate_activity_data.sql</code> script directly against your Postgres database using DBeaver, psql, or any Postgres client.</p>
+
+    <h3>3a: Optional - Check Account Data in Snowflake</h3>
+    <p>You can run this query in Snowflake to see your account/subscription data:</p>
+    
+    <div class="step-box">
+        <code><span class="comment">-- Run in Snowflake to get SSO/MFA subscription quantities per account</span>
+<span class="keyword">SELECT</span> 
+    a.ACCOUNT_ID,
+    a.ACCOUNT_NAME,
+    p.PRODUCT_CODE,
+    s.QUANTITY <span class="keyword">as</span> LICENSE_COUNT
+<span class="keyword">FROM</span> PROD.FINAL.SUBSCRIPTION_DAILY s
+<span class="keyword">JOIN</span> PROD.FINAL.ACCOUNT_DAILY a <span class="keyword">ON</span> s.ACCOUNT_ID = a.ACCOUNT_ID
+<span class="keyword">JOIN</span> PROD.RAW.SFDC_PRODUCT p <span class="keyword">ON</span> s.PRODUCT_ID = p.PRODUCT_ID
+<span class="keyword">WHERE</span> p.PRODUCT_CODE <span class="keyword">IN</span> (<span class="string">'SSO'</span>, <span class="string">'MFA'</span>)
+<span class="keyword">ORDER BY</span> a.ACCOUNT_NAME, p.PRODUCT_CODE;</code>
+    </div>
+
+    <h3>3b: Execute the SQL Script</h3>
+    <p>The script uses sequential INSERT statements with <code class="inline">pg_sleep()</code> between batches for CDC sync timing.</p>
+    
+    <p><strong>Option A - Using psql:</strong></p>
+    <div class="step-box">
+        <code>psql postgres://snowflake_admin:****@&lt;your-instance&gt;.postgres.snowflake.app:5432/postgres \
+    -f generate_activity_data.sql</code>
+    </div>
+    
+    <p><strong>Option B - Using DBeaver or other GUI:</strong></p>
+    <ol>
+        <li>Connect to your Snowflake Postgres instance</li>
+        <li>Open <code class="inline">generate_activity_data.sql</code></li>
+        <li>Execute the entire script (F5 or Run button)</li>
+        <li>Watch the progress as data flows through CDC</li>
+    </ol>
+
+    <h3>3c: Verify the Data</h3>
+    <p>The script ends with summary queries, but you can also run:</p>
+    
+    <div class="step-box">
+        <code><span class="comment">-- Check record counts</span>
+<span class="keyword">SELECT</span> <span class="string">'users'</span> <span class="keyword">as</span> table_name, <span class="function">COUNT</span>(*) <span class="keyword">as</span> row_count <span class="keyword">FROM</span> users
+<span class="keyword">UNION ALL</span>
+<span class="keyword">SELECT</span> <span class="string">'product_user_assignment'</span>, <span class="function">COUNT</span>(*) <span class="keyword">FROM</span> product_user_assignment
+<span class="keyword">UNION ALL</span>
+<span class="keyword">SELECT</span> <span class="string">'device_auth_logs'</span>, <span class="function">COUNT</span>(*) <span class="keyword">FROM</span> device_auth_logs;
+
+<span class="comment">-- Sample auth event structure</span>
+<span class="keyword">SELECT</span> auth_event <span class="keyword">FROM</span> device_auth_logs <span class="keyword">LIMIT</span> 1;</code>
+    </div>
+
+    <hr>
+
+    <h2>Step 4: Configure External Access for Openflow</h2>
+    
+    <p>Openflow runs in Snowpark Container Services (SPCS) and needs network access to reach your Postgres instance.</p>
+
+    <div class="step-box">
+        <code><span class="keyword">USE ROLE</span> ACCOUNTADMIN;
+
+<span class="comment">-- Step 1: Create Role and Database</span>
+<span class="comment">-- ----------------------------------------------------------------------------</span>
+
+<span class="comment">-- Create runtime role</span>
+<span class="keyword">CREATE ROLE IF NOT EXISTS</span> Postgres_HOL_ROLE;
+
+<span class="comment">-- Create database for okta log data</span>
+<span class="keyword">CREATE DATABASE IF NOT EXISTS</span> Okta_PGCDC_DB;
+
+<span class="comment">-- Create warehouse for data processing</span>
+<span class="keyword">CREATE WAREHOUSE IF NOT EXISTS</span> Okta_PGCDC_WH
+  WAREHOUSE_SIZE = MEDIUM
+  AUTO_SUSPEND = 300
+  AUTO_RESUME = TRUE;
+
+<span class="comment">-- Grant privileges to runtime role</span>
+<span class="keyword">GRANT OWNERSHIP ON DATABASE</span> Okta_PGCDC_DB <span class="keyword">TO ROLE</span> Postgres_HOL_ROLE;
+<span class="keyword">GRANT OWNERSHIP ON SCHEMA</span> Okta_PGCDC_DB.PUBLIC <span class="keyword">TO ROLE</span> Postgres_HOL_ROLE;
+<span class="keyword">GRANT USAGE ON WAREHOUSE</span> Okta_PGCDC_WH <span class="keyword">TO ROLE</span> Postgres_HOL_ROLE;
+
+<span class="comment">-- Grant runtime role to OpenFlow admin</span>
+<span class="keyword">GRANT ROLE</span> Postgres_HOL_ROLE <span class="keyword">TO ROLE</span> OPENFLOW_ADMIN;
+
+<span class="comment">-- Step 2: Create Schema and Network Rules</span>
+<span class="comment">-- ----------------------------------------------------------------------------</span>
+
+<span class="keyword">USE ROLE</span> Postgres_HOL_ROLE;
+<span class="keyword">USE DATABASE</span> Okta_PGCDC_DB;
+
+<span class="comment">-- Create schema for network rules</span>
+<span class="keyword">CREATE SCHEMA IF NOT EXISTS</span> Okta_PGCDC_DB.NETWORKS;
+
+
+<span class="comment">-- Step 3: Create Network Rules</span>
+<span class="comment">-- ----------------------------------------------------------------------------</span>
+<span class="comment">-- IMPORTANT: Replace with your PostgreSQL endpoint</span>
+<span class="comment">-- </span>
+<span class="comment">-- Examples:</span>
+<span class="comment">-- - GCP Cloud SQL:        '34.123.45.67:5432' (public IP)</span>
+<span class="comment">-- - AWS RDS:              'mydb.abc123.us-east-1.rds.amazonaws.com:5432'</span>
+<span class="comment">-- - Azure Database:       'myserver.postgres.database.azure.com:5432'</span>
+<span class="comment">-- - Self-hosted:          'your-postgres-server.com:5432'</span>
+
+<span class="keyword">CREATE OR REPLACE</span> NETWORK RULE Okta_PGCDC_DB.NETWORKS.postgres_network_rule
+  MODE = EGRESS
+  TYPE = HOST_PORT
+  VALUE_LIST = (<span class="string">'YOUR-POSTGRES-HOST:5432'</span>); <span class="comment">-- Replace with your PostgreSQL endpoint</span>
+
+<span class="comment">-- Step 4: Create External Access Integration</span>
+<span class="comment">-- ----------------------------------------------------------------------------</span>
+
+<span class="keyword">USE ROLE</span> ACCOUNTADMIN;
+
+<span class="keyword">CREATE OR REPLACE</span> EXTERNAL ACCESS INTEGRATION okta_pgcdc_access
+  ALLOWED_NETWORK_RULES = (
+    Okta_PGCDC_DB.NETWORKS.postgres_network_rule
+  )
+  ENABLED = TRUE
+  COMMENT = <span class="string">'OpenFlow SPCS runtime access for Okta CDC'</span>;
+
+<span class="comment">-- Grant usage to runtime role</span>
+<span class="keyword">GRANT USAGE ON INTEGRATION</span> okta_pgcdc_access <span class="keyword">TO ROLE</span> Postgres_HOL_ROLE;</code>
+    </div>
+
+    <hr>
+
+    <h2>Step 5: Configure Openflow CDC Pipeline</h2>
+
+    <h3>Prerequisites</h3>
+    <p>Before configuring the PostgreSQL connector, ensure you have:</p>
+    <ul>
+        <li>Completed Step 4 (External Access Integration created)</li>
+        <li>An active Openflow deployment (<code class="inline">Openflow_Deployment</code>)</li>
+        <li>Downloaded the PostgreSQL JDBC driver from <a href="https://jdbc.postgresql.org/download/" target="_blank">https://jdbc.postgresql.org/download/</a> (e.g., <code class="inline">postgresql-42.7.7.jar</code>)</li>
+    </ul>
+
+    <h3>5a: Create Openflow Runtime</h3>
+    <ol>
+        <li>Navigate to <strong>Data</strong> → <strong>Ingestion</strong> → <strong>Openflow</strong> in Snowsight</li>
+        <li>Click the <strong>Runtimes</strong> tab</li>
+        <li>Ensure your role is set to <code class="inline">ACCOUNTADMIN</code> or your Openflow admin role</li>
+        <li>Click <strong>+ Runtime</strong> and configure:
+            <ul>
+                <li><strong>Name:</strong> <code class="inline">okta-activity-logs-runtime</code></li>
+                <li><strong>Deployment:</strong> Select <code class="inline">Openflow_Deployment</code></li>
+                <li><strong>Runtime Role:</strong> Select <code class="inline">Postgres_HOL_ROLE</code> (created in Step 4)</li>
+                <li><strong>External Access Integration:</strong> Select <code class="inline">okta_pgcdc_access</code> (created in Step 4)</li>
+            </ul>
+        </li>
+        <li>Click <strong>Create</strong> and wait for the runtime status to become <strong>ACTIVE</strong> (3-5 minutes)</li>
+    </ol>
+
+    <h3>5b: Add PostgreSQL Connector</h3>
+    <ol>
+        <li>From the Openflow Overview page, click <strong>+ Add Connector</strong></li>
+        <li>Select <strong>PostgreSQL</strong> connector</li>
+        <li>Choose your runtime: <code class="inline">okta-activity-logs-runtime</code></li>
+        <li>Click to open the runtime canvas</li>
+    </ol>
+
+    <h3>5c: Configure PostgreSQL Source Parameters</h3>
+    <p>From the Parameter contexts list, edit <strong>PostgreSQL Source Parameters</strong>:</p>
+    
+    <table>
+        <tr>
+            <th>Parameter</th>
+            <th>Value</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>PostgreSQL Connection URL</td>
+            <td><code class="inline">jdbc:postgresql://&lt;your-instance&gt;.postgres.snowflake.app:5432/postgres</code></td>
+            <td>JDBC connection URL</td>
+        </tr>
+        <tr>
+            <td>PostgreSQL JDBC Driver</td>
+            <td><code class="inline">postgresql-42.7.7.jar</code></td>
+            <td>Download from <a href="https://jdbc.postgresql.org/download/" target="_blank">jdbc.postgresql.org</a>, upload as reference asset</td>
+        </tr>
+        <tr>
+            <td>PostgreSQL Password</td>
+            <td><code class="inline">&lt;your-password&gt;</code></td>
+            <td>Password for snowflake_admin user</td>
+        </tr>
+        <tr>
+            <td>PostgreSQL Username</td>
+            <td><code class="inline">snowflake_admin</code></td>
+            <td>PostgreSQL user with REPLICATION privileges</td>
+        </tr>
+        <tr>
+            <td>Publication Name</td>
+            <td><code class="inline">openflow_publication</code></td>
+            <td>The publication created in Step 1e</td>
+        </tr>
+        <tr>
+            <td>Replication Slot Name</td>
+            <td><em>(leave empty)</em></td>
+            <td>Auto-generated by Openflow</td>
+        </tr>
+    </table>
+
+    <div class="info-box">
+        <strong>Upload JDBC Driver:</strong>
+        <ol>
+            <li>Click the file icon next to "PostgreSQL JDBC Driver"</li>
+            <li>Select "Reference Asset"</li>
+            <li>Click "Upload" and select your downloaded <code class="inline">postgresql-42.7.7.jar</code></li>
+            <li>Click Apply</li>
+        </ol>
+    </div>
+
+    <h3>5d: Configure PostgreSQL Destination Parameters</h3>
+    <p>Edit <strong>PostgreSQL Destination Parameters</strong>:</p>
+    
+    <table>
+        <tr>
+            <th>Parameter</th>
+            <th>Value</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>Destination Database</td>
+            <td><code class="inline">Okta_PGCDC_DB</code></td>
+            <td>Target Snowflake database (created in Step 4)</td>
+        </tr>
+        <tr>
+            <td>Snowflake Authentication Strategy</td>
+            <td><code class="inline">SNOWFLAKE_MANAGED</code></td>
+            <td>Uses Snowflake managed authentication</td>
+        </tr>
+        <tr>
+            <td>Snowflake Role</td>
+            <td><code class="inline">Postgres_HOL_ROLE</code></td>
+            <td>Role with table creation privileges (created in Step 4)</td>
+        </tr>
+        <tr>
+            <td>Snowflake Warehouse</td>
+            <td><code class="inline">Okta_PGCDC_WH</code></td>
+            <td>Warehouse for data processing (created in Step 4)</td>
+        </tr>
+        <tr>
+            <td>Snowflake Account Identifier</td>
+            <td><em>(leave empty)</em></td>
+            <td>Not needed with session token</td>
+        </tr>
+        <tr>
+            <td>Snowflake Username</td>
+            <td><em>(leave empty)</em></td>
+            <td>Not needed with session token</td>
+        </tr>
+        <tr>
+            <td>Snowflake Private Key</td>
+            <td><em>(leave empty)</em></td>
+            <td>Not needed with session token</td>
+        </tr>
+    </table>
+
+    <h3>5e: Configure PostgreSQL Ingestion Parameters</h3>
+    <p>Edit <strong>PostgreSQL Ingestion Parameters</strong>:</p>
+    
+    <table>
+        <tr>
+            <th>Parameter</th>
+            <th>Value</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>Included Table Regex</td>
+            <td><code class="inline">public\..*</code></td>
+            <td>Matches all tables in public schema</td>
+        </tr>
+        <tr>
+            <td>Column Filter JSON</td>
+            <td><code class="inline">[]</code></td>
+            <td>Empty = include all columns</td>
+        </tr>
+        <tr>
+            <td>Ingestion Type</td>
+            <td><code class="inline">full</code></td>
+            <td>Full snapshot + incremental CDC</td>
+        </tr>
+        <tr>
+            <td>Merge Task Schedule CRON</td>
+            <td><code class="inline">* * * * * ?</code></td>
+            <td>Every second for near real-time</td>
+        </tr>
+    </table>
+    
+    <div class="info-box">
+        <strong>Note:</strong> The regex <code class="inline">public\..*</code> matches tables like <code class="inline">public.users</code>, <code class="inline">public.product_user_assignment</code>, <code class="inline">public.device_auth_logs</code>. The backslash escapes the dot for literal matching.
+    </div>
+
+    <h3>5f: Enable Services and Start Connector</h3>
+    <p>Before starting the connector, you need to enable the controller services that manage the CDC replication process.</p>
+    <p>Follow these steps to enable services and start the connector:</p>
+    <ol>
+        <li><strong>Enable Services:</strong> Right-click on the postgres connector and select <strong>Enable all controller services</strong></li>
+        <li><strong>Start Process Groups:</strong> Right-click on the postgres connector and click <strong>Start</strong></li>
+        <li><strong>Monitor Progress:</strong> Watch the connector flow execute the snapshot load</li>
+    </ol>
+
+    <h3>5g: Verify CDC is Working</h3>
+    <p>Check that data is flowing to Snowflake:</p>
+    
+    <div class="step-box">
+        <code><span class="comment">-- Run in Snowflake after a few minutes</span>
+<span class="keyword">USE ROLE</span> Postgres_HOL_ROLE;
+<span class="keyword">USE DATABASE</span> Okta_PGCDC_DB;
+<span class="keyword">USE SCHEMA</span> <span class="string">"public"</span>;
+
+<span class="comment">-- Check if tables were created</span>
+<span class="keyword">SHOW TABLES IN SCHEMA</span> Okta_PGCDC_DB.<span class="string">"public"</span>;
+
+<span class="comment">-- Verify row counts</span>
+<span class="keyword">SELECT</span> <span class="string">'USERS'</span> <span class="keyword">as</span> table_name, <span class="function">COUNT</span>(*) <span class="keyword">as</span> row_count <span class="keyword">FROM</span> <span class="string">"users"</span>
+<span class="keyword">UNION ALL</span>
+<span class="keyword">SELECT</span> <span class="string">'PRODUCT_USER_ASSIGNMENT'</span>, <span class="function">COUNT</span>(*) <span class="keyword">FROM</span> <span class="string">"product_user_assignment"</span>
+<span class="keyword">UNION ALL</span>
+<span class="keyword">SELECT</span> <span class="string">'DEVICE_AUTH_LOGS'</span>, <span class="function">COUNT</span>(*) <span class="keyword">FROM</span> <span class="string">"device_auth_logs"</span>;</code>
+    </div>
+
+    <h3>Troubleshooting</h3>
+    
+    <div class="warning-box">
+        <strong>Connection Failed?</strong>
+        <ul>
+            <li>Verify the External Access Integration is enabled: <code class="inline">SHOW EXTERNAL ACCESS INTEGRATIONS;</code></li>
+            <li>Check the network rule has the correct Postgres endpoint: <code class="inline">DESC NETWORK RULE Okta_PGCDC_DB.NETWORKS.postgres_network_rule;</code></li>
+            <li>Ensure PostgreSQL allows connections (network policy attached)</li>
+        </ul>
+    </div>
+    
+    <div class="warning-box">
+        <strong>No Data Flowing?</strong>
+        <ul>
+            <li>Verify the publication exists in PostgreSQL: <code class="inline">SELECT * FROM pg_publication;</code></li>
+            <li>Check replication slot was created: <code class="inline">SELECT * FROM pg_replication_slots;</code></li>
+            <li>Verify user has REPLICATION privilege: <code class="inline">SELECT rolname, rolreplication FROM pg_roles WHERE rolname = 'snowflake_admin';</code></li>
+        </ul>
+    </div>
+    
+    <p><strong>Reference:</strong> <a href="https://docs.snowflake.com/en/user-guide/data-integration/openflow/connectors/postgres/about" target="_blank">Openflow PostgreSQL CDC Documentation</a></p>
+
+    <hr>
+
+    <h2>Step 6: Streaming Data Simulator (Optional)</h2>
+    <p>Create a Postgres procedure to simulate continuous auth log generation for real-time CDC testing.</p>
+
+    <h3>6a: Create the Streaming Procedure in Postgres</h3>
+    
+    <div class="step-box">
+        <code><span class="comment">-- Execute in Postgres</span>
+<span class="keyword">CREATE OR REPLACE PROCEDURE</span> stream_auth_logs(batch_size INT, num_batches INT)
+<span class="keyword">LANGUAGE</span> plpgsql
+<span class="keyword">AS</span> $$
+<span class="keyword">DECLARE</span>
+    i INT;
+    j INT;
+    active_user RECORD;
+    auth_event JSONB;
+    device_types TEXT[] := ARRAY[<span class="string">'iPhone'</span>, <span class="string">'Android'</span>, <span class="string">'Mac'</span>, <span class="string">'Windows'</span>];
+    statuses TEXT[] := ARRAY[<span class="string">'success'</span>, <span class="string">'success'</span>, <span class="string">'success'</span>, <span class="string">'failure'</span>];
+    device_type TEXT;
+    status TEXT;
+    total_logs INT := 0;
+<span class="keyword">BEGIN</span>
+    <span class="keyword">FOR</span> i <span class="keyword">IN</span> 1..num_batches <span class="keyword">LOOP</span>
+        <span class="keyword">FOR</span> j <span class="keyword">IN</span> 1..batch_size <span class="keyword">LOOP</span>
+            <span class="comment">-- Get random active user</span>
+            <span class="keyword">SELECT</span> u.user_id, pua.product_code <span class="keyword">INTO</span> active_user
+            <span class="keyword">FROM</span> users u
+            <span class="keyword">JOIN</span> product_user_assignment pua <span class="keyword">ON</span> u.user_id = pua.user_id
+            <span class="keyword">WHERE</span> pua.assignment_status = <span class="string">'active'</span>
+            <span class="keyword">ORDER BY</span> random()
+            <span class="keyword">LIMIT</span> 1;
+            
+            device_type := device_types[1 + floor(random() * 4)::int];
+            status := statuses[1 + floor(random() * 4)::int];
+            
+            auth_event := <span class="function">jsonb_build_object</span>(
+                <span class="string">'auth_type'</span>, active_user.product_code,
+                <span class="string">'auth_status'</span>, status,
+                <span class="string">'device'</span>, <span class="function">jsonb_build_object</span>(
+                    <span class="string">'type'</span>, device_type,
+                    <span class="string">'os'</span>, <span class="keyword">CASE</span> device_type 
+                        <span class="keyword">WHEN</span> <span class="string">'iPhone'</span> <span class="keyword">THEN</span> <span class="string">'iOS'</span> 
+                        <span class="keyword">WHEN</span> <span class="string">'Mac'</span> <span class="keyword">THEN</span> <span class="string">'macOS'</span> 
+                        <span class="keyword">ELSE</span> <span class="string">'Android'</span> 
+                    <span class="keyword">END</span>,
+                    <span class="string">'browser'</span>, <span class="string">'Chrome'</span>
+                ),
+                <span class="string">'session'</span>, <span class="function">jsonb_build_object</span>(
+                    <span class="string">'session_id'</span>, <span class="string">'sess_'</span> || substr(md5(random()::text), 1, 12),
+                    <span class="string">'risk_score'</span>, floor(random() * 30)::int
+                )
+            );
+            
+            <span class="keyword">INSERT INTO</span> device_auth_logs (user_id, event_timestamp, auth_event)
+            <span class="keyword">VALUES</span> (active_user.user_id, NOW(), auth_event);
+            
+            total_logs := total_logs + 1;
+        <span class="keyword">END LOOP</span>;
+        <span class="keyword">COMMIT</span>;
+    <span class="keyword">END LOOP</span>;
+    
+    <span class="keyword">RAISE NOTICE</span> <span class="string">'Generated % auth logs in % batches'</span>, total_logs, num_batches;
+<span class="keyword">END</span>;
+$$;</code>
+    </div>
+
+    <h3>6b: Execute Streaming Simulation</h3>
+    <div class="step-box">
+        <code><span class="comment">-- Generate 100 auth logs (10 batches of 10)</span>
+<span class="keyword">CALL</span> stream_auth_logs(10, 10);</code>
+    </div>
+
+    <hr>
+
+    <h2>Verification Queries</h2>
+    <p>After data flows to Snowflake, verify with these queries:</p>
+
+    <h3>License Assignment Rate</h3>
+    <div class="step-box">
+        <code><span class="comment">-- What % of licenses are assigned to users?</span>
+<span class="keyword">SELECT</span> 
+    u.<span class="string">"account_id"</span>,
+    a.ACCOUNT_NAME,
+    pua.<span class="string">"product_code"</span>,
+    <span class="function">COUNT</span>(<span class="keyword">DISTINCT</span> pua.<span class="string">"user_id"</span>) <span class="keyword">as</span> assigned_users,
+    s.QUANTITY <span class="keyword">as</span> total_licenses,
+    <span class="function">ROUND</span>(<span class="function">COUNT</span>(<span class="keyword">DISTINCT</span> pua.<span class="string">"user_id"</span>) / s.QUANTITY * 100, 1) <span class="keyword">as</span> assignment_rate_pct
+<span class="keyword">FROM</span> Okta_PGCDC_DB.<span class="string">"public"</span>.<span class="string">"product_user_assignment"</span> pua
+<span class="keyword">JOIN</span> Okta_PGCDC_DB.<span class="string">"public"</span>.<span class="string">"users"</span> u <span class="keyword">ON</span> pua.<span class="string">"user_id"</span> = u.<span class="string">"user_id"</span>
+<span class="keyword">JOIN</span> PROD.FINAL.ACCOUNT_DAILY a <span class="keyword">ON</span> u.<span class="string">"account_id"</span> = a.ACCOUNT_ID
+<span class="keyword">JOIN</span> PROD.FINAL.SUBSCRIPTION_DAILY s <span class="keyword">ON</span> a.ACCOUNT_ID = s.ACCOUNT_ID
+<span class="keyword">JOIN</span> PROD.RAW.SFDC_PRODUCT p <span class="keyword">ON</span> s.PRODUCT_ID = p.PRODUCT_ID <span class="keyword">AND</span> p.PRODUCT_CODE = pua.<span class="string">"product_code"</span>
+<span class="keyword">GROUP BY</span> u.<span class="string">"account_id"</span>, a.ACCOUNT_NAME, pua.<span class="string">"product_code"</span>, s.QUANTITY
+<span class="keyword">ORDER BY</span> assignment_rate_pct <span class="keyword">DESC</span>;</code>
+    </div>
+
+    <h3>Feature Adoption by Usage</h3>
+    <div class="step-box">
+        <code><span class="comment">-- Of assigned users, how many are actually using the product?</span>
+<span class="keyword">SELECT</span> 
+    u.<span class="string">"account_id"</span>,
+    pua.<span class="string">"product_code"</span> <span class="keyword">as</span> product,
+    <span class="function">COUNT</span>(<span class="keyword">DISTINCT</span> pua.<span class="string">"user_id"</span>) <span class="keyword">as</span> assigned_users,
+    <span class="function">COUNT</span>(<span class="keyword">DISTINCT</span> dal.<span class="string">"user_id"</span>) <span class="keyword">as</span> active_users,
+    <span class="function">ROUND</span>(<span class="function">COUNT</span>(<span class="keyword">DISTINCT</span> dal.<span class="string">"user_id"</span>) / <span class="function">COUNT</span>(<span class="keyword">DISTINCT</span> pua.<span class="string">"user_id"</span>) * 100, 1) <span class="keyword">as</span> adoption_rate_pct
+<span class="keyword">FROM</span> Okta_PGCDC_DB.<span class="string">"public"</span>.<span class="string">"product_user_assignment"</span> pua
+<span class="keyword">JOIN</span> Okta_PGCDC_DB.<span class="string">"public"</span>.<span class="string">"users"</span> u <span class="keyword">ON</span> pua.<span class="string">"user_id"</span> = u.<span class="string">"user_id"</span>
+<span class="keyword">LEFT JOIN</span> Okta_PGCDC_DB.<span class="string">"public"</span>.<span class="string">"device_auth_logs"</span> dal 
+    <span class="keyword">ON</span> pua.<span class="string">"user_id"</span> = dal.<span class="string">"user_id"</span> 
+    <span class="keyword">AND</span> pua.<span class="string">"product_code"</span> = dal.<span class="string">"auth_event"</span>:auth_type::<span class="keyword">VARCHAR</span>
+<span class="keyword">GROUP BY</span> u.<span class="string">"account_id"</span>, pua.<span class="string">"product_code"</span>
+<span class="keyword">ORDER BY</span> adoption_rate_pct;</code>
+    </div>
+
+    <h3>Auth Success Rate by Product</h3>
+    <div class="step-box">
+        <code><span class="comment">-- Authentication success/failure breakdown</span>
+<span class="keyword">SELECT</span> 
+    <span class="string">"auth_event"</span>:auth_type::<span class="keyword">VARCHAR</span> <span class="keyword">as</span> product,
+    <span class="string">"auth_event"</span>:auth_status::<span class="keyword">VARCHAR</span> <span class="keyword">as</span> status,
+    <span class="function">COUNT</span>(*) <span class="keyword">as</span> event_count,
+    <span class="function">ROUND</span>(<span class="function">COUNT</span>(*) * 100.0 / <span class="function">SUM</span>(<span class="function">COUNT</span>(*)) <span class="keyword">OVER</span> (<span class="keyword">PARTITION BY</span> <span class="string">"auth_event"</span>:auth_type), 1) <span class="keyword">as</span> pct
+<span class="keyword">FROM</span> Okta_PGCDC_DB.<span class="string">"public"</span>.<span class="string">"device_auth_logs"</span>
+<span class="keyword">GROUP BY</span> <span class="string">"auth_event"</span>:auth_type, <span class="string">"auth_event"</span>:auth_status
+<span class="keyword">ORDER BY</span> product, event_count <span class="keyword">DESC</span>;</code>
+    </div>
+
+    <h3>Authentication by Device Type and OS</h3>
+    <div class="step-box">
+        <code><span class="comment">-- Breakdown by device type and operating system</span>
+<span class="keyword">SELECT</span> 
+    <span class="string">"auth_event"</span>:device:type::<span class="keyword">VARCHAR</span> <span class="keyword">as</span> device_type,
+    <span class="string">"auth_event"</span>:device:os::<span class="keyword">VARCHAR</span> <span class="keyword">as</span> os,
+    <span class="string">"auth_event"</span>:device:os_version::<span class="keyword">VARCHAR</span> <span class="keyword">as</span> os_version,
+    <span class="function">COUNT</span>(*) <span class="keyword">as</span> auth_count,
+    <span class="function">SUM</span>(<span class="keyword">CASE WHEN</span> <span class="string">"auth_event"</span>:auth_status = <span class="string">'success'</span> <span class="keyword">THEN</span> 1 <span class="keyword">ELSE</span> 0 <span class="keyword">END</span>) <span class="keyword">as</span> success_count,
+    <span class="function">ROUND</span>(<span class="function">SUM</span>(<span class="keyword">CASE WHEN</span> <span class="string">"auth_event"</span>:auth_status = <span class="string">'success'</span> <span class="keyword">THEN</span> 1 <span class="keyword">ELSE</span> 0 <span class="keyword">END</span>) * 100.0 / <span class="function">COUNT</span>(*), 1) <span class="keyword">as</span> success_rate
+<span class="keyword">FROM</span> Okta_PGCDC_DB.<span class="string">"public"</span>.<span class="string">"device_auth_logs"</span>
+<span class="keyword">GROUP BY</span> 1, 2, 3
+<span class="keyword">ORDER BY</span> auth_count <span class="keyword">DESC</span>;</code>
+    </div>
+
+    <h3>Authentication by Geographic Location</h3>
+    <div class="step-box">
+        <code><span class="comment">-- Auth events by city and timezone</span>
+<span class="keyword">SELECT</span> 
+    <span class="string">"auth_event"</span>:geo_location:city::<span class="keyword">VARCHAR</span> <span class="keyword">as</span> city,
+    <span class="string">"auth_event"</span>:geo_location:state::<span class="keyword">VARCHAR</span> <span class="keyword">as</span> state,
+    <span class="string">"auth_event"</span>:geo_location:timezone::<span class="keyword">VARCHAR</span> <span class="keyword">as</span> timezone,
+    <span class="function">COUNT</span>(*) <span class="keyword">as</span> auth_count,
+    <span class="function">AVG</span>(<span class="string">"auth_event"</span>:session:risk_score::<span class="keyword">INT</span>) <span class="keyword">as</span> avg_risk_score
+<span class="keyword">FROM</span> Okta_PGCDC_DB.<span class="string">"public"</span>.<span class="string">"device_auth_logs"</span>
+<span class="keyword">GROUP BY</span> 1, 2, 3
+<span class="keyword">ORDER BY</span> auth_count <span class="keyword">DESC</span>;</code>
+    </div>
+
+    <h3>High Risk Authentication Events</h3>
+    <div class="step-box">
+        <code><span class="comment">-- Events with elevated risk scores or new devices</span>
+<span class="keyword">SELECT</span> 
+    u.<span class="string">"account_id"</span>,
+    u.<span class="string">"email"</span>,
+    <span class="string">"auth_event"</span>:device:type::<span class="keyword">VARCHAR</span> <span class="keyword">as</span> device,
+    <span class="string">"auth_event"</span>:device:manufacturer::<span class="keyword">VARCHAR</span> <span class="keyword">as</span> manufacturer,
+    <span class="string">"auth_event"</span>:geo_location:city::<span class="keyword">VARCHAR</span> <span class="keyword">as</span> city,
+    <span class="string">"auth_event"</span>:session:risk_score::<span class="keyword">INT</span> <span class="keyword">as</span> risk_score,
+    <span class="string">"auth_event"</span>:session:risk_factors <span class="keyword">as</span> risk_factors,
+    <span class="string">"auth_event"</span>:session:is_new_device::<span class="keyword">BOOLEAN</span> <span class="keyword">as</span> new_device,
+    dal.<span class="string">"event_timestamp"</span>
+<span class="keyword">FROM</span> Okta_PGCDC_DB.<span class="string">"public"</span>.<span class="string">"device_auth_logs"</span> dal
+<span class="keyword">JOIN</span> Okta_PGCDC_DB.<span class="string">"public"</span>.<span class="string">"users"</span> u <span class="keyword">ON</span> dal.<span class="string">"user_id"</span> = u.<span class="string">"user_id"</span>
+<span class="keyword">WHERE</span> <span class="string">"auth_event"</span>:session:risk_score::<span class="keyword">INT</span> > 50
+   <span class="keyword">OR</span> <span class="string">"auth_event"</span>:session:is_new_device::<span class="keyword">BOOLEAN</span> = true
+<span class="keyword">ORDER BY</span> risk_score <span class="keyword">DESC</span>
+<span class="keyword">LIMIT</span> 100;</code>
+    </div>
+
+    <h3>MFA Method Analysis</h3>
+    <div class="step-box">
+        <code><span class="comment">-- MFA authentication breakdown by method</span>
+<span class="keyword">SELECT</span> 
+    <span class="string">"auth_event"</span>:mfa_details:method::<span class="keyword">VARCHAR</span> <span class="keyword">as</span> mfa_method,
+    <span class="string">"auth_event"</span>:mfa_details:provider::<span class="keyword">VARCHAR</span> <span class="keyword">as</span> provider,
+    <span class="string">"auth_event"</span>:auth_status::<span class="keyword">VARCHAR</span> <span class="keyword">as</span> status,
+    <span class="function">COUNT</span>(*) <span class="keyword">as</span> event_count
+<span class="keyword">FROM</span> Okta_PGCDC_DB.<span class="string">"public"</span>.<span class="string">"device_auth_logs"</span>
+<span class="keyword">WHERE</span> <span class="string">"auth_event"</span>:auth_type = <span class="string">'MFA'</span>
+<span class="keyword">GROUP BY</span> 1, 2, 3
+<span class="keyword">ORDER BY</span> mfa_method, event_count <span class="keyword">DESC</span>;</code>
+    </div>
+
+    <h3>Failed Authentication Analysis</h3>
+    <div class="step-box">
+        <code><span class="comment">-- Analyze authentication failures by reason</span>
+<span class="keyword">SELECT</span> 
+    <span class="string">"auth_event"</span>:failure_details:reason::<span class="keyword">VARCHAR</span> <span class="keyword">as</span> failure_reason,
+    <span class="string">"auth_event"</span>:device:type::<span class="keyword">VARCHAR</span> <span class="keyword">as</span> device_type,
+    <span class="function">COUNT</span>(*) <span class="keyword">as</span> failure_count,
+    <span class="function">COUNT</span>(<span class="keyword">DISTINCT</span> dal.<span class="string">"user_id"</span>) <span class="keyword">as</span> affected_users,
+    <span class="function">SUM</span>(<span class="keyword">CASE WHEN</span> <span class="string">"auth_event"</span>:failure_details:locked_out::<span class="keyword">BOOLEAN</span> <span class="keyword">THEN</span> 1 <span class="keyword">ELSE</span> 0 <span class="keyword">END</span>) <span class="keyword">as</span> lockouts
+<span class="keyword">FROM</span> Okta_PGCDC_DB.<span class="string">"public"</span>.<span class="string">"device_auth_logs"</span> dal
+<span class="keyword">WHERE</span> <span class="string">"auth_event"</span>:auth_status <span class="keyword">IN</span> (<span class="string">'failure'</span>, <span class="string">'denied'</span>)
+<span class="keyword">GROUP BY</span> 1, 2
+<span class="keyword">ORDER BY</span> failure_count <span class="keyword">DESC</span>;</code>
+    </div>
+
+    <hr>
+
+    <h2>Reference Documentation</h2>
+    <ul>
+        <li><a href="https://docs.snowflake.com/en/user-guide/snowflake-postgres/about" target="_blank">Snowflake Postgres Documentation</a></li>
+        <li><a href="https://www.snowflake.com/en/developers/guides/getting-started-with-snowflake-postgres/" target="_blank">Snowflake Postgres Getting Started Guide</a></li>
+        <li><a href="https://docs.snowflake.com/en/user-guide/data-load-openflow" target="_blank">Openflow CDC Documentation</a></li>
+        <li><a href="https://www.postgresql.org/docs/current/datatype-json.html" target="_blank">PostgreSQL JSONB Documentation</a></li>
+    </ul>
+
+</body>
+</html>

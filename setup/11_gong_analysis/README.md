@@ -280,13 +280,18 @@ Add this table definition to the `tables` section of your semantic model:
         data_type: NUMBER
 ```
 
-### 7b: Recreate the Semantic View
+### 7b: Remove Old Health Score from Accounts Table
 
-After updating your YAML file, recreate the semantic view:
+The existing semantic model may have a `HEALTH_SCORE` dimension in the Accounts table. Remove it so the new `ACCOUNT_HEALTH_SCORE` table is used instead:
 
-```sql
-CREATE OR REPLACE SEMANTIC VIEW PROD.FINAL.CUSTOMER_360_SEMANTIC_VIEW
-  FROM @PROD.RAW.SEMANTIC_STAGE/customer_360_semantic_model.yaml;
+**In your semantic model YAML, find and remove this from the Accounts table dimensions:**
+
+```yaml
+# REMOVE this dimension from ACCOUNT_DAILY table:
+      - name: HEALTH_SCORE
+        expr: HEALTH_SCORE
+        description: ...
+        data_type: VARCHAR
 ```
 
 ### 7c: Verify the Health Score Data is Accessible
@@ -301,26 +306,3 @@ Test a query through the semantic view:
 ```
 
 ---
-
-## Summary Checklist
-
-| Step | Action | Object Created | Stores Content? |
-|------|--------|----------------|-----------------|
-| 1 | Upload transcript files | `@PROD.RAW.GONG_TRANSCRIPTS_STAGE` | Files only |
-| 2 | Create source table | `PROD.RAW.GONG_TRANSCRIPT_SOURCE` | Yes (required for search refresh) |
-| 3 | Create search service | `PROD.RAW.GONG_SEARCH_SERVICE` | Indexed |
-| 4 | Extract sentiment | `PROD.RAW.GONG_CALL_SENTIMENT` | **No** - metadata + score only |
-| 5 | Aggregate by account | `PROD.FINAL.ACCOUNT_CALL_SENTIMENT` | No |
-| 6 | Composite health score | `PROD.FINAL.ACCOUNT_HEALTH_SCORE` | No |
-| 7 | Add to semantic view | `PROD.FINAL.CUSTOMER_360_SEMANTIC_VIEW` | No - YAML update |
-
-
----
-
-## Key Design Decision
-
-- **Transcript content** lives only in:
-  1. Stage files (source of truth)
-  2. Cortex Search index (for semantic search)
-- **Tables store only**: file name, account, date, sentiment score
-- To read actual transcript content → use Cortex Search or query the stage directly

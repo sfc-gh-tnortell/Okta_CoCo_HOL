@@ -395,12 +395,17 @@ industry_benchmark <span class="sql-keyword">AS</span> (
         data_type: NUMBER</code></pre>
 </div>
 
-<h3>7b: Recreate the Semantic View</h3>
-<p>After updating your YAML file, recreate the semantic view:</p>
+<h3>7b: Remove Old Health Score from Accounts Table</h3>
+<p>The existing semantic model may have a <code>HEALTH_SCORE</code> dimension in the Accounts table. Remove it so the new <code>ACCOUNT_HEALTH_SCORE</code> table is used instead:</p>
+
+<p><strong>In your semantic model YAML, find and remove this from the Accounts table dimensions:</strong></p>
 
 <div class="step-box">
-<pre><code><span class="sql-keyword">CREATE OR REPLACE</span> SEMANTIC VIEW PROD.FINAL.CUSTOMER_360_SEMANTIC_VIEW
-  <span class="sql-keyword">FROM</span> @PROD.RAW.SEMANTIC_STAGE/customer_360_semantic_model.yaml;</code></pre>
+<pre><code><span class="sql-comment"># REMOVE this dimension from ACCOUNT_DAILY table:</span>
+      - name: HEALTH_SCORE
+        expr: HEALTH_SCORE
+        description: ...
+        data_type: VARCHAR</code></pre>
 </div>
 
 <h3>7c: Verify the Health Score Data is Accessible</h3>
@@ -411,77 +416,6 @@ industry_benchmark <span class="sql-keyword">AS</span> (
 <span class="sql-comment">-- "Show me accounts with Critical or At Risk health scores"</span>
 <span class="sql-comment">-- "What is the average health score by industry?"</span>
 <span class="sql-comment">-- "Which accounts have negative call sentiment but high product coverage?"</span></code></pre>
-</div>
-
-<hr>
-
-<h2>Summary Checklist</h2>
-<table>
-    <thead>
-        <tr>
-            <th>Step</th>
-            <th>Action</th>
-            <th>Object Created</th>
-            <th>Stores Content?</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>1</td>
-            <td>Upload transcript files</td>
-            <td><code>@PROD.RAW.GONG_TRANSCRIPTS_STAGE</code></td>
-            <td>Files only</td>
-        </tr>
-        <tr>
-            <td>2</td>
-            <td>Create source table</td>
-            <td><code>PROD.RAW.GONG_TRANSCRIPT_SOURCE</code></td>
-            <td>Yes (required for search refresh)</td>
-        </tr>
-        <tr>
-            <td>3</td>
-            <td>Create search service</td>
-            <td><code>PROD.RAW.GONG_SEARCH_SERVICE</code></td>
-            <td>Indexed</td>
-        </tr>
-        <tr>
-            <td>4</td>
-            <td>Extract sentiment</td>
-            <td><code>PROD.RAW.GONG_CALL_SENTIMENT</code></td>
-            <td><strong>No</strong> - metadata + score only</td>
-        </tr>
-        <tr>
-            <td>5</td>
-            <td>Aggregate by account</td>
-            <td><code>PROD.FINAL.ACCOUNT_CALL_SENTIMENT</code></td>
-            <td>No</td>
-        </tr>
-        <tr>
-            <td>6</td>
-            <td>Composite health score</td>
-            <td><code>PROD.FINAL.ACCOUNT_HEALTH_SCORE</code></td>
-            <td>No</td>
-        </tr>
-        <tr>
-            <td>7</td>
-            <td>Add to semantic view</td>
-            <td><code>PROD.FINAL.CUSTOMER_360_SEMANTIC_VIEW</code></td>
-            <td>No - YAML update</td>
-        </tr>
-    </tbody>
-</table>
-
-<hr>
-
-<h2>Key Design Decision</h2>
-<div class="info-box">
-    <p><strong>Transcript content</strong> lives only in:</p>
-    <ol>
-        <li>Stage files (source of truth)</li>
-        <li>Cortex Search index (for semantic search)</li>
-    </ol>
-    <p><strong>Tables store only:</strong> file name, account, date, sentiment score</p>
-    <p>To read actual transcript content → use Cortex Search or query the stage directly</p>
 </div>
 
 </body>
