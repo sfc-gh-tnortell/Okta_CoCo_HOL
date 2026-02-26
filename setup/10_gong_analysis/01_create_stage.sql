@@ -1,5 +1,5 @@
 -- ============================================================
--- Step 5a: Create Stage for PDF Contracts
+-- Step 11a: Create Stage and Upload Gong Transcripts
 -- ============================================================
 
 USE ROLE SYSADMIN;
@@ -7,26 +7,25 @@ USE WAREHOUSE COMPUTE_WH;
 USE DATABASE PROD;
 USE SCHEMA RAW;
 
--- Create stage for PDF contracts
-CREATE OR REPLACE STAGE PROD.RAW.CONTRACTS_STAGE
+-- Create stage for Gong transcripts
+CREATE OR REPLACE STAGE PROD.RAW.GONG_TRANSCRIPTS_STAGE
     DIRECTORY = (ENABLE = TRUE)
-    ENCRYPTION = (TYPE = 'SNOWFLAKE_SSE')
-    COMMENT = 'Stage for storing PDF contract documents';
+    ENCRYPTION = (TYPE = 'SNOWFLAKE_SSE');
 
 -- Verify stage created
-SHOW STAGES LIKE 'CONTRACTS_STAGE' IN SCHEMA PROD.RAW;
+SHOW STAGES LIKE 'GONG_TRANSCRIPTS_STAGE' IN SCHEMA PROD.RAW;
 
 -- ============================================================
--- MANUAL STEP: Upload PDF contracts via Snowsight
+-- MANUAL STEP: Upload transcript files via Snowsight
 -- ============================================================
 -- 1. Navigate to Data → Databases → PROD → RAW → Stages
--- 2. Click on CONTRACTS_STAGE
--- 3. Click + Files → Select all PDF files from unstructured_data/contracts_pdf/
+-- 2. Click on GONG_TRANSCRIPTS_STAGE
+-- 3. Click + Files → Select all .txt files from unstructured_data/gong_transcripts/
 -- 4. Click Upload
 -- ============================================================
 
 -- Refresh directory after upload
-ALTER STAGE PROD.RAW.CONTRACTS_STAGE REFRESH;
+ALTER STAGE PROD.RAW.GONG_TRANSCRIPTS_STAGE REFRESH;
 
 -- Verify files uploaded
-SELECT * FROM DIRECTORY(@PROD.RAW.CONTRACTS_STAGE) LIMIT 10;
+SELECT * FROM DIRECTORY(@PROD.RAW.GONG_TRANSCRIPTS_STAGE) LIMIT 10;

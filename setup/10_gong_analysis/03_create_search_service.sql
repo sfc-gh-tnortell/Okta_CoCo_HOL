@@ -1,0 +1,15 @@
+-- Step 3: Create Cortex Search Service on Transcript Source Table
+
+CREATE OR REPLACE CORTEX SEARCH SERVICE PROD.RAW.GONG_SEARCH_SERVICE
+    ON CONTENT
+    ATTRIBUTES FILE_NAME, ACCOUNT_NAME, CALL_DATE
+    WAREHOUSE = COMPUTE_WH
+    TARGET_LAG = '1 hour'
+    AS (
+        SELECT 
+            FILE_NAME,
+            ACCOUNT_NAME,
+            CALL_DATE,
+            CONTENT
+        FROM PROD.RAW.GONG_TRANSCRIPT_SOURCE
+    );

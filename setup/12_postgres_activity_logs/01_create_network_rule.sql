@@ -1,0 +1,21 @@
+-- Step 1a: Create Network Rule for Snowflake Postgres
+-- Network rule allows external connections to Postgres
+
+USE ROLE SYSADMIN;
+CREATE SCHEMA IF NOT EXISTS PROD.NETWORK;
+
+USE ROLE ACCOUNTADMIN;
+
+-- Create network rule allowing all IPs (for demo purposes)
+CREATE OR REPLACE NETWORK RULE PROD.NETWORK.POSTGRES_ACCESS_RULE
+  TYPE = IPV4
+  MODE = POSTGRES_INGRESS
+  VALUE_LIST = ('0.0.0.0/0');
+
+-- Create network policy referencing the rule
+CREATE OR REPLACE NETWORK POLICY POSTGRES_ACCESS_POLICY
+  ALLOWED_NETWORK_RULE_LIST = ('PROD.NETWORK.POSTGRES_ACCESS_RULE');
+
+-- Verify the network rule
+SHOW NETWORK RULES IN SCHEMA PROD.NETWORK;
+SHOW NETWORK POLICIES;

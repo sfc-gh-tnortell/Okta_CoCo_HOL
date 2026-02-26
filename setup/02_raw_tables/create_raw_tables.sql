@@ -1,0 +1,146 @@
+-- ============================================================
+-- Step 2: Create All Raw Tables
+-- ============================================================
+-- This script creates all SFDC raw tables for the Customer 360 demo
+
+USE ROLE SYSADMIN;
+USE WAREHOUSE COMPUTE_WH;
+USE DATABASE PROD;
+USE SCHEMA RAW;
+
+-- ============================================================
+-- 2a: SFDC_ACCOUNT - Customer account master data
+-- ============================================================
+
+CREATE OR REPLACE TABLE PROD.RAW.SFDC_ACCOUNT (
+    ACCOUNT_ID VARCHAR(18) NOT NULL PRIMARY KEY,
+    PARENT_ACCOUNT_ID VARCHAR(18),
+    ACCOUNT_NAME VARCHAR(255),
+    ACCOUNT_STATUS VARCHAR(255),
+    ACCOUNT_TYPE VARCHAR(40),
+    CREATED_DATE TIMESTAMP_NTZ(9),
+    CUSTOMER_ACQUISITION_DATE DATE,
+    RENEWAL_DATE DATE,
+    CARR NUMBER(18,2),
+    CARR_USD NUMBER(18,2),
+    BILLING_STREET VARCHAR(255),
+    BILLING_CITY VARCHAR(40),
+    BILLING_STATE VARCHAR(80),
+    BILLING_POSTALCODE VARCHAR(20),
+    BILLING_COUNTRY VARCHAR(80),
+    GEOGRAPHY VARCHAR(256),
+    TERRITORY VARCHAR(256),
+    TIMEZONE VARCHAR(256),
+    INDUSTRY VARCHAR(40),
+    SUB_INDUSTRY VARCHAR(255),
+    PRIMARY_INDUSTRY VARCHAR(255),
+    ANNUAL_REVENUE NUMBER(18,0),
+    NUMBER_OF_EMPLOYEES NUMBER(38,0),
+    WEBSITE VARCHAR(255),
+    HEALTHSCORE VARCHAR(1500),
+    TOP_ACCOUNT BOOLEAN,
+    NAMED_ACCOUNT BOOLEAN,
+    IS_CUSTOMER BOOLEAN,
+    PAYING_CUSTOMER BOOLEAN
+);
+
+-- ============================================================
+-- 2b: SFDC_PRODUCT - Identity product catalog
+-- ============================================================
+
+CREATE OR REPLACE TABLE PROD.RAW.SFDC_PRODUCT (
+    PRODUCT_ID VARCHAR(18) NOT NULL PRIMARY KEY,
+    PRODUCT_NAME VARCHAR(255),
+    PRODUCT_CODE VARCHAR(255),
+    PRODUCT_DESCRIPTION VARCHAR(4000),
+    PRODUCT_FAMILY VARCHAR(40),
+    PRODUCT_LINE VARCHAR(255),
+    PRODUCT_CATEGORY VARCHAR(255),
+    PRODUCT_UNIT VARCHAR(255),
+    IS_ACTIVE BOOLEAN,
+    LIST_PRICE_USD NUMBER(14,2),
+    CREATED_DATE TIMESTAMP_NTZ(9)
+);
+
+-- ============================================================
+-- 2c: SFDC_CONTRACT - Customer contracts
+-- ============================================================
+
+CREATE OR REPLACE TABLE PROD.RAW.SFDC_CONTRACT (
+    CONTRACT_ID VARCHAR(18) NOT NULL PRIMARY KEY,
+    CONTRACT_NUMBER VARCHAR(30),
+    ACCOUNT_ID VARCHAR(18),
+    CURRENCY_ISO_CODE VARCHAR(3),
+    START_DATE DATE,
+    END_DATE DATE,
+    CONTRACT_TERM NUMBER(38,0),
+    CONTRACT_STATUS VARCHAR(40),
+    BILLING_STREET VARCHAR(255),
+    BILLING_CITY VARCHAR(40),
+    BILLING_STATE VARCHAR(80),
+    BILLING_POSTAL_CODE VARCHAR(20),
+    BILLING_COUNTRY VARCHAR(80),
+    TCV NUMBER(18,2),
+    CARR NUMBER(18,2),
+    MRR NUMBER(18,2),
+    ARR NUMBER(18,2),
+    CREATED_DATE TIMESTAMP_NTZ(9),
+    ACTIVATED_DATE TIMESTAMP_NTZ(9),
+    AUTO_RENEW BOOLEAN,
+    CUSTOMER_SIGNED_DATE DATE,
+    CUSTOMER_SIGNED_TITLE VARCHAR(40)
+);
+
+-- ============================================================
+-- 2d: SFDC_SUBSCRIPTION_CPQ - Product subscriptions
+-- ============================================================
+
+CREATE OR REPLACE TABLE PROD.RAW.SFDC_SUBSCRIPTION_CPQ (
+    SUBSCRIPTION_ID VARCHAR(18) NOT NULL PRIMARY KEY,
+    SUBSCRIPTION_NAME VARCHAR(80),
+    ACCOUNT_ID VARCHAR(18),
+    CONTRACT_ID VARCHAR(18),
+    CONTRACT_NUMBER VARCHAR(255),
+    PRODUCT_ID VARCHAR(18),
+    PRODUCT_NAME VARCHAR(1300),
+    CURRENCY_ISO_CODE VARCHAR(3),
+    START_DATE DATE,
+    END_DATE DATE,
+    QUANTITY NUMBER(12,2),
+    LIST_PRICE NUMBER(14,2),
+    DISCOUNT NUMBER(11,2),
+    CUSTOMER_PRICE NUMBER(14,2),
+    NET_PRICE NUMBER(14,2),
+    ARR NUMBER(18,2),
+    MRR NUMBER(18,2),
+    TCV NUMBER(18,2),
+    CREATED_DATE TIMESTAMP_NTZ(9)
+);
+
+-- ============================================================
+-- 2e: SFDC_OPPORTUNITY - Sales opportunities
+-- ============================================================
+-- Tracks sales opportunities including failed expansion attempts
+
+CREATE OR REPLACE TABLE PROD.RAW.SFDC_OPPORTUNITY (
+    OPPORTUNITY_ID VARCHAR(18) NOT NULL PRIMARY KEY,
+    OPPORTUNITY_NAME VARCHAR(255),
+    ACCOUNT_ID VARCHAR(18),
+    CONTRACT_ID VARCHAR(18),
+    PRODUCT_ID VARCHAR(18),
+    STAGE VARCHAR(40),
+    STATUS VARCHAR(40),
+    AMOUNT NUMBER(18,2),
+    CLOSE_DATE DATE,
+    CREATED_DATE TIMESTAMP_NTZ(9),
+    LOSS_REASON VARCHAR(255),
+    COMPETITOR VARCHAR(255),
+    NEXT_STEPS VARCHAR(1000),
+    DESCRIPTION VARCHAR(4000)
+);
+
+-- ============================================================
+-- Verify tables created
+-- ============================================================
+
+SHOW TABLES IN SCHEMA PROD.RAW LIKE 'SFDC%';

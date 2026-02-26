@@ -1,0 +1,69 @@
+-- Step 6: Create Composite Health Score View
+-- Combines sentiment, product coverage, and peer comparison into a single health score
+
+CREATE OR REPLACE VIEW PROD.FINAL.ACCOUNT_HEALTH_SCORE AS
+WITH account_products AS (
+    SELECT
+        a.ACCOUNT_NAME,
+        COUNT(DISTINCT s.PRODUCT_ID) AS PRODUCTS_OWNED,
+        14 AS TOTAL_PRODUCTS,
+        COUNT(DISTINCT s.PRODUCT_ID) / 14.0 AS PRODUCT_COVERAGE
+    FROM PROD.FINAL.ACCOUNT_DAILY a
+    LEFT JOIN PROD.FINAL.SUBSCRIPTION_DAILY s ON a.ACCOUNT_ID = s.ACCOUNT_ID
+    GROUP BY a.ACCOUNT_NAME
+),
+industry_benchmark AS (
+    SELECT
+        a.INDUSTRY,
+        AVG(ap.PRODUCT_COVERAGE) AS AVG_INDUSTRY_COVERAGE
+    FROM PROD.FINAL.ACCOUNT_DAILY a
+    JOIN account_products ap ON a.ACCOUNT_NAME = ap.ACCOUNT_NAME
+    GROUP BY a.INDUSTRY
+)
+SELECT
+    a.ACCOUNT_NAME,
+    a.INDUSTRY,
+    
+    -- Sentiment Score (0-100, weighted 50%)
+    COALESCE(ROUND((s.SENTIMENT_SCORE + 1) * 50, 1), 50) AS SENTIMENT_SCORE_NORMALIZED,
+    
+    -- Product Whitespace Score (0-100, weighted 20%)
+    LEAST(ROUND(p.PRODUCT_COVERAGE * 300, 1), 100) AS PRODUCT_COVERAGE_SCORE,
+    
+    -- Peer Comparison Score (0-100, weighted 30%)
+    ROUND(CASE 
+        WHEN p.PRODUCT_COVERAGE >= ib.AVG_INDUSTRY_COVERAGE THEN 
+            70 + (LEAST((p.PRODUCT_COVERAGE - ib.AVG_INDUSTRY_COVERAGE) / NULLIF(ib.AVG_INDUSTRY_COVERAGE, 0), 1) * 30)
+        ELSE 
+            40 + (30 * (p.PRODUCT_COVERAGE / NULLIF(ib.AVG_INDUSTRY_COVERAGE, 0)))
+    END, 1) AS PEER_COMPARISON_SCORE,
+    
+    -- Composite Health Score (rebalanced weights)
+    ROUND(
+        (COALESCE((s.SENTIMENT_SCORE + 1) * 50, 50) * 0.50) +
+        (LEAST(p.PRODUCT_COVERAGE * 300, 100) * 0.20) +
+        (CASE 
+            WHEN p.PRODUCT_COVERAGE >= ib.AVG_INDUSTRY_COVERAGE THEN 
+                70 + (LEAST((p.PRODUCT_COVERAGE - ib.AVG_INDUSTRY_COVERAGE) / NULLIF(ib.AVG_INDUSTRY_COVERAGE, 0), 1) * 30)
+            ELSE 
+                40 + (30 * (p.PRODUCT_COVERAGE / NULLIF(ib.AVG_INDUSTRY_COVERAGE, 0)))
+        END * 0.30)
+    , 1) AS COMPOSITE_HEALTH_SCORE,
+    
+    CASE 
+        WHEN COMPOSITE_HEALTH_SCORE >= 70 THEN 'Excellent'
+        WHEN COMPOSITE_HEALTH_SCORE >= 60 THEN 'Good'
+        WHEN COMPOSITE_HEALTH_SCORE >= 50 THEN 'At Risk'
+        ELSE 'Critical'
+    END AS HEALTH_CATEGORY,
+    
+    s.TOTAL_CALLS,
+    s.POSITIVE_CALLS,
+    s.NEGATIVE_CALLS,
+    p.PRODUCTS_OWNED,
+    p.TOTAL_PRODUCTS
+    
+FROM PROD.FINAL.ACCOUNT_DAILY a
+LEFT JOIN PROD.FINAL.ACCOUNT_CALL_SENTIMENT s ON a.ACCOUNT_NAME = s.ACCOUNT_NAME
+LEFT JOIN account_products p ON a.ACCOUNT_NAME = p.ACCOUNT_NAME
+LEFT JOIN industry_benchmark ib ON a.INDUSTRY = ib.INDUSTRY;

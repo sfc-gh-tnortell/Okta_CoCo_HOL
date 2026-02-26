@@ -1,11 +1,14 @@
 -- ============================================================
--- Step 7c: Create Cortex Search Service for Contracts
+-- Step 5d: Create Cortex Search Service for Contracts
 -- ============================================================
--- Enables semantic search over contract documents
+-- Enable semantic search over contract documents
+
+USE ROLE SYSADMIN;
+USE WAREHOUSE COMPUTE_WH;
 
 CREATE OR REPLACE CORTEX SEARCH SERVICE PROD.FINAL.CONTRACT_SEARCH
     ON CONTRACT_TEXT
-    ATTRIBUTES ACCOUNT_NAME, CONTRACT_NUMBER, PRODUCTS_LIST, TOTAL_VALUE
+    ATTRIBUTES ACCOUNT_NAME, CONTRACT_NUMBER, PRODUCTS_LIST, TOTAL_VALUE, INDUSTRY
     WAREHOUSE = COMPUTE_WH
     TARGET_LAG = '1 day'
 AS (
@@ -14,6 +17,7 @@ AS (
         CONTRACT_NUMBER,
         ACCOUNT_ID,
         ACCOUNT_NAME,
+        INDUSTRY,
         FILE_NAME,
         CONTRACT_TEXT,
         CONTRACT_SUMMARY,

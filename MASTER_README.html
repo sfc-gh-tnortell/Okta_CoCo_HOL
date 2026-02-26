@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Okta Customer 360 Demo - Complete Setup Guide</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1, h2, h3, h4 {
+            color: #1a1a2e;
+        }
+        h1 {
+            border-bottom: 3px solid #0066cc;
+            padding-bottom: 10px;
+        }
+        h2 {
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 8px;
+            margin-top: 40px;
+        }
+        h3 {
+            color: #0066cc;
+            margin-top: 30px;
+        }
+        pre {
+            background-color: #1a1a2e;
+            color: #e0e0e0;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+        code {
+            background-color: #e8e8e8;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #0066cc;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .note {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .important {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .toc {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .toc ul {
+            list-style-type: none;
+            padding-left: 20px;
+        }
+        .toc > ul {
+            padding-left: 0;
+        }
+        .toc a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        .architecture {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #ddd;
+            margin: 40px 0;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Okta Customer 360 Demo - Complete Setup Guide</h1>
+
+<p>This comprehensive guide covers the full setup of the Okta Customer 360 demo environment for Snowflake Intelligence, including core data setup, Gong transcript analysis, web search integration, and real-time activity log streaming via Snowflake Postgres and Openflow CDC.</p>
+
+<hr>
+
+<div class="toc">
+<h2>Table of Contents</h2>
+<ul>
+    <li><a href="#overview">1. Overview</a></li>
+    <li><a href="#prerequisites">2. Prerequisites</a></li>
+    <li><a href="#part1">3. Part 1: Core Setup (Steps 1-9)</a></li>
+    <li><a href="#part2">4. Part 2: Gong Transcript Analysis (Step 10)</a></li>
+    <li><a href="#part3">5. Part 3: Web Search Integration (Step 11)</a></li>
+    <li><a href="#part4">6. Part 4: Postgres Activity Logs Pipeline (Step 12)</a></li>
+    <li><a href="#questions">7. Sample Questions</a></li>
+    <li><a href="#summary">8. Data Summary</a></li>
+    <li><a href="#troubleshooting">9. Troubleshooting</a></li>
+</ul>
+</div>
+
+<hr>
+
+<h2 id="overview">Overview</h2>
+
+<h3>What You'll Build</h3>
+<ul>
+    <li><strong>250 Fortune 500 customer accounts</strong> with realistic CRM data</li>
+    <li><strong>250 contracts</strong> with product subscriptions and pricing</li>
+    <li><strong>~970 subscriptions</strong> across 14 identity products (SSO, MFA, PAM, etc.)</li>
+    <li><strong>500 opportunities</strong> including failed expansion attempts with loss reasons</li>
+    <li><strong>~150 Gong call transcripts</strong> with business insights</li>
+    <li><strong>Cortex Search Services</strong> for semantic search over contracts and transcripts</li>
+    <li><strong>Semantic View</strong> for natural language SQL queries</li>
+    <li><strong>Cortex Agent</strong> for Snowflake Intelligence</li>
+    <li><strong>Real-time activity log streaming</strong> via Snowflake Postgres and Openflow CDC</li>
+</ul>
+
+<h3>Architecture</h3>
+<div class="architecture">
+<pre>
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        Snowflake Intelligence                           │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │                    Customer 360 Agent                            │   │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌────────────────────────┐ │   │
+│  │  │Cortex Analyst│  │Cortex Search │  │     Web Search         │ │   │
+│  │  │(Semantic View)│  │(Transcripts) │  │(Public Company Info)  │ │   │
+│  │  └──────────────┘  └──────────────┘  └────────────────────────┘ │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                │                                        │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │                     PROD Database                                │   │
+│  │  ┌────────────────┐  ┌──────────────┐  ┌─────────────────────┐  │   │
+│  │  │ RAW Schema     │  │FINAL Schema  │  │ AGENT Schema        │  │   │
+│  │  │ - SFDC_*       │  │ - *_DAILY DT │  │ - Agent Definition  │  │   │
+│  │  │ - GONG_*       │  │ - Health     │  │                     │  │   │
+│  │  └────────────────┘  └──────────────┘  └─────────────────────┘  │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │                   Okta_PGCDC_DB (CDC Pipeline)                   │   │
+│  │  ┌────────────────────────────────────────────────────────────┐ │   │
+│  │  │ "public" Schema (from Postgres CDC)                        │ │   │
+│  │  │  - "users", "product_user_assignment", "device_auth_logs"  │ │   │
+│  │  └────────────────────────────────────────────────────────────┘ │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────┘
+                                   ▲
+                                   │ Openflow CDC
+                                   │
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     Snowflake Postgres Instance                         │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │ public schema: users, product_user_assignment, device_auth_logs  │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────┘
+</pre>
+</div>
+
+<hr>
+
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+    <li>Snowflake account with Cortex features enabled</li>
+    <li>ACCOUNTADMIN or SYSADMIN role</li>
+    <li>COMPUTE_WH warehouse (or modify scripts to use your warehouse)</li>
+    <li>Python 3.x with packages (for PDF/transcript generation):
+        <pre><code>pip install snowflake-connector-python reportlab</code></pre>
+    </li>
+    <li>For Step 12: Existing Openflow deployment</li>
+</ul>
+
+<hr>
+
+<h2 id="part1">Part 1: Core Setup (Steps 1-9)</h2>
+
+<h3>Folder Structure</h3>
+<pre><code>setup/
+├── 01_database/          # Create database and schemas
+├── 02_raw_tables/        # Create source tables (SFDC_* + GONG)
+├── 03_data_generation/   # Generate synthetic data
+├── 04_sales_teams/       # Create sales team mappings
+├── 05_pdf_contracts/     # Parse PDF contracts and create search service
+├── 06_final_schema/      # Create dynamic tables
+├── 07_semantic_view/     # Create semantic view for Cortex Analyst
+├── 08_agent/             # Create Cortex Agent
+├── 09_grants/            # Grant permissions</code></pre>
+
+<h3>Step 1: Database Setup</h3>
+<pre><code>@setup/01_database/01_create_database.sql</code></pre>
+
+<h3>Step 2: Create Raw Tables</h3>
+<pre><code>@setup/02_raw_tables/create_raw_tables.sql</code></pre>
+
+<h3>Step 3: Generate Data</h3>
+<pre><code>@setup/03_data_generation/01_insert_products.sql
+@setup/03_data_generation/02_insert_accounts.sql
+@setup/03_data_generation/03_fix_timezone_distribution.sql
+@setup/03_data_generation/04_insert_contracts.sql
+@setup/03_data_generation/05_insert_subscriptions.sql
+@setup/03_data_generation/06_insert_opportunities.sql
+@setup/03_data_generation/07_insert_gong_transcripts.sql</code></pre>
+
+<h3>Step 4: Sales Teams</h3>
+<pre><code>@setup/04_sales_teams/01_create_sales_team_table.sql
+@setup/04_sales_teams/02_insert_sales_teams.sql</code></pre>
+
+<h3>Step 5: PDF Contracts Pipeline</h3>
+
+<p>This step uploads PDF contracts, parses them, and creates a Cortex Search service.</p>
+
+<h4>5a: Create Stage</h4>
+<pre><code>@setup/05_pdf_contracts/01_create_stage.sql</code></pre>
+
+<p>Then upload the PDFs via Snowsight:</p>
+<ol>
+    <li>Navigate to <strong>Data → Databases → PROD → RAW → Stages</strong></li>
+    <li>Click on <code>CONTRACTS_STAGE</code></li>
+    <li>Click <strong>+ Files</strong> → Select all PDF files from <code>unstructured_data/contracts_pdf/</code></li>
+    <li>Click <strong>Upload</strong></li>
+</ol>
+
+<h4>5b: Parse PDFs into Source Table</h4>
+<pre><code>@setup/05_pdf_contracts/02_create_source_table.sql</code></pre>
+
+<h4>5c: Create Enriched Content Table</h4>
+<pre><code>@setup/05_pdf_contracts/03_create_content_table.sql</code></pre>
+
+<h4>5d: Create Cortex Search Service</h4>
+<pre><code>@setup/05_pdf_contracts/04_create_search_service.sql</code></pre>
+
+<h3>Step 6: Final Schema (Dynamic Tables)</h3>
+<pre><code>@setup/06_final_schema/01_create_final_schema.sql
+@setup/06_final_schema/02_create_account_daily_dt.sql
+@setup/06_final_schema/03_create_subscription_daily_dt.sql
+@setup/06_final_schema/04_create_opportunity_daily_dt.sql</code></pre>
+
+<h3>Step 7: Semantic View &amp; Cortex Analyst</h3>
+
+<p>Create the semantic view and configure Cortex Analyst to enable natural language queries.</p>
+
+<h4>7a: Create Semantic View</h4>
+<pre><code>@setup/07_semantic_view/01_create_semantic_view.sql</code></pre>
+
+<h4>7b: Create Cortex Analyst in Snowsight</h4>
+<ol>
+    <li>Navigate to <strong>AI &amp; ML → Cortex Analyst</strong></li>
+    <li>Click <strong>+ Analyst</strong></li>
+    <li>Configure:
+        <ul>
+            <li><strong>Name</strong>: <code>Customer 360 Analyst</code></li>
+            <li><strong>Semantic View</strong>: Select <code>PROD.FINAL.CUSTOMER_360_SEMANTIC_VIEW</code></li>
+        </ul>
+    </li>
+    <li>Click <strong>Create</strong></li>
+    <li>Test with a sample question like "Show me accounts at risk of churning"</li>
+</ol>
+
+<h3>Step 8: Cortex Agent</h3>
+
+<p>Create the Cortex Agent for Snowflake Intelligence with access to all data sources.</p>
+
+<h4>Option A: Via SQL</h4>
+<pre><code>@setup/08_agent/01_create_agent_schema.sql
+@setup/08_agent/02_create_agent.sql</code></pre>
+
+<h4>Option B: Via Snowsight UI</h4>
+<ol>
+    <li>Navigate to <strong>AI &amp; ML → Snowflake Intelligence → Agents</strong></li>
+    <li>Click <strong>+ Agent</strong></li>
+    <li>Configure basic settings:
+        <ul>
+            <li><strong>Name</strong>: <code>CUSTOMER_360_AGENT</code></li>
+            <li><strong>Database</strong>: <code>SNOWFLAKE_INTELLIGENCE</code></li>
+            <li><strong>Schema</strong>: <code>AGENTS</code></li>
+            <li><strong>Model</strong>: <code>claude-3-5-sonnet</code></li>
+        </ul>
+    </li>
+    <li>Add tools:
+        <table>
+            <tr><th>Tool</th><th>Type</th><th>Configuration</th></tr>
+            <tr>
+                <td>Cortex Analyst</td>
+                <td>cortex_analyst_text_to_sql</td>
+                <td>Semantic View: <code>PROD.FINAL.CUSTOMER_360_SEMANTIC_VIEW</code></td>
+            </tr>
+            <tr>
+                <td>Contract Search</td>
+                <td>cortex_search</td>
+                <td>Service: <code>PROD.FINAL.CONTRACT_SEARCH</code>, Max Results: 10</td>
+            </tr>
+            <tr>
+                <td>Transcript Search</td>
+                <td>cortex_search</td>
+                <td>Service: <code>PROD.FINAL.TRANSCRIPT_SEARCH</code>, Max Results: 10</td>
+            </tr>
+            <tr>
+                <td>Web Search</td>
+                <td>web_search</td>
+                <td>Name: <code>company_research</code></td>
+            </tr>
+        </table>
+    </li>
+    <li>Add system prompt (see <code>02_create_agent.sql</code> for full prompt)</li>
+    <li>Click <strong>Create</strong></li>
+</ol>
+
+<div class="success">
+<strong>Verify in Snowflake Intelligence:</strong>
+<ol>
+    <li>Navigate to <strong>AI &amp; ML → Snowflake Intelligence</strong></li>
+    <li>The <code>CUSTOMER_360_AGENT</code> should appear in the agent list</li>
+    <li>Click to open and test with a sample question like "Which accounts are at risk?"</li>
+</ol>
+</div>
+
+<h3>Step 9: Permissions</h3>
+<pre><code>@setup/09_grants/01_grant_permissions.sql</code></pre>
+
+<hr>
+
+<h2 id="part2">Part 2: Gong Transcript Analysis (Step 10)</h2>
+
+<p>This step creates a semantic search service over Gong call transcripts and builds a composite account health score.</p>
+
+<h3>Folder Structure</h3>
+<pre><code>setup/10_gong_analysis/
+├── 01_create_stage.sql           # Create stage for transcripts
+├── 02_create_source_table.sql    # Parse transcripts into table
+├── 03_create_search_service.sql  # Cortex Search on transcripts
+├── 04_create_sentiment_table.sql # Extract sentiment metadata
+├── 05_create_sentiment_summary.sql # Account-level sentiment
+├── 06_create_health_score.sql    # Composite health score view
+└── README.md                     # Detailed guide</code></pre>
+
+<h3>Step 10a: Create Transcript Stage</h3>
+<pre><code>@setup/10_gong_analysis/01_create_stage.sql</code></pre>
+
+<p>Then upload <code>.txt</code> files via Snowsight:</p>
+<ol>
+    <li>Navigate to <strong>Data → Databases → PROD → RAW → Stages</strong></li>
+    <li>Click on <code>GONG_TRANSCRIPTS_STAGE</code></li>
+    <li>Click <strong>+ Files</strong> → Select all <code>.txt</code> files from <code>unstructured_data/gong_transcripts/</code></li>
+    <li>Click <strong>Upload</strong></li>
+</ol>
+
+<h3>Step 10b-f: Create Tables and Views</h3>
+<pre><code>@setup/10_gong_analysis/02_create_source_table.sql
+@setup/10_gong_analysis/03_create_search_service.sql
+@setup/10_gong_analysis/04_create_sentiment_table.sql
+@setup/10_gong_analysis/05_create_sentiment_summary.sql
+@setup/10_gong_analysis/06_create_health_score.sql</code></pre>
+
+<h3>Step 10g: Add to Semantic View</h3>
+<p>Add the <code>ACCOUNT_HEALTH_SCORE</code> table to your semantic view YAML (see <code>README.md</code> in <code>10_gong_analysis/</code> for full YAML snippet).</p>
+
+<hr>
+
+<h2 id="part3">Part 3: Web Search Integration (Step 11)</h2>
+
+<p>Enable web search for your Cortex Agent to access public company information, news, and 10K filings.</p>
+
+<h3>Step 11a: Enable Web Search at Account Level</h3>
+<ol>
+    <li>Sign in to <strong>Snowsight</strong></li>
+    <li>Navigate to <strong>AI & ML → Agents → Settings</strong></li>
+    <li>Toggle <strong>Web search</strong> to enable</li>
+</ol>
+
+<h3>Step 11b: Add Web Search Tool to Agent</h3>
+<pre><code>CREATE OR REPLACE CORTEX AGENT SNOWFLAKE_INTELLIGENCE.AGENTS.CUSTOMER_360_AGENT
+COMMENT = 'Customer 360 Agent with web search enabled'
+MODEL = 'claude-3-5-sonnet'
+TOOLS = (
+    {
+        'type': 'cortex_analyst_text_to_sql',
+        'semantic_view': 'PROD.FINAL.CUSTOMER_360_SEMANTIC_VIEW'
+    },
+    {
+        'type': 'cortex_search',
+        'name': 'transcript_search',
+        'cortex_search_service': 'PROD.FINAL.TRANSCRIPT_SEARCH',
+        'description': 'Search call transcripts for customer insights',
+        'max_results': 10
+    },
+    {
+        'type': 'web_search',
+        'name': 'company_research',
+        'description': 'Search for publicly available information about companies'
+    }
+)
+SYSTEM_PROMPT = 'You are a Customer 360 AI assistant with access to structured data, call transcripts, and web search.';</code></pre>
+
+<hr>
+
+<h2 id="part4">Part 4: Postgres Activity Logs Pipeline (Step 12)</h2>
+
+<p>Stream real-time Okta activity logs from Snowflake Postgres to Snowflake tables via Openflow CDC.</p>
+
+<h3>Folder Structure</h3>
+<pre><code>setup/12_postgres_activity_logs/
+├── 01_create_network_rule.sql     # Network rule for Postgres
+├── 02_create_postgres_tables.sql  # DDL for Postgres tables
+├── 03_enable_replication.sql      # Enable CDC replication
+├── 04_configure_external_access.sql # External access for Openflow
+├── 05_verification_queries.sql    # Verification and analytics queries
+├── generate_activity_data.sql     # Sample data generation
+└── README.md                      # Detailed guide</code></pre>
+
+<h3>Step 12a: Create Network Rule</h3>
+<pre><code>@setup/12_postgres_activity_logs/01_create_network_rule.sql</code></pre>
+
+<h3>Step 12b: Create Postgres Instance (Snowsight UI)</h3>
+<ol>
+    <li>Navigate to <strong>Data → Databases → + Database</strong></li>
+    <li>Select <strong>Postgres</strong> as the database type</li>
+    <li>Configure:
+        <ul>
+            <li><strong>Name</strong>: <code>okta_activity_logs</code></li>
+            <li><strong>Compute Family</strong>: BURST_S</li>
+            <li><strong>Storage</strong>: 25 GB</li>
+            <li><strong>Network Policy</strong>: <code>POSTGRES_ACCESS_POLICY</code></li>
+        </ul>
+    </li>
+    <li>Save connection credentials</li>
+</ol>
+
+<h3>Step 12c: Create Postgres Tables</h3>
+<p>Connect to your Postgres instance and run:</p>
+<pre><code>@setup/12_postgres_activity_logs/02_create_postgres_tables.sql</code></pre>
+
+<h3>Step 12d: Enable Replication</h3>
+<pre><code>@setup/12_postgres_activity_logs/03_enable_replication.sql</code></pre>
+
+<h3>Step 12e: Generate Sample Data</h3>
+<pre><code>@setup/12_postgres_activity_logs/generate_activity_data.sql</code></pre>
+
+<h3>Step 12f: Configure External Access for Openflow</h3>
+<p>Update the network rule with your Postgres host, then run:</p>
+<pre><code>@setup/12_postgres_activity_logs/04_configure_external_access.sql</code></pre>
+
+<h3>Step 12g: Configure Openflow CDC Pipeline</h3>
+
+<h4>1. Create Runtime</h4>
+<p>Navigate to <strong>Data → Ingestion → Openflow → Runtimes</strong></p>
+<table>
+    <tr><th>Setting</th><th>Value</th></tr>
+    <tr><td>Name</td><td><code>okta-activity-logs-runtime</code></td></tr>
+    <tr><td>Deployment</td><td>Your Openflow deployment</td></tr>
+    <tr><td>Runtime Role</td><td><code>Postgres_HOL_ROLE</code></td></tr>
+    <tr><td>External Access Integration</td><td><code>okta_pgcdc_access</code></td></tr>
+</table>
+
+<h4>2. Configure Source Parameters</h4>
+<table>
+    <tr><th>Parameter</th><th>Value</th></tr>
+    <tr><td>PostgreSQL Connection URL</td><td><code>jdbc:postgresql://&lt;host&gt;:5432/postgres</code></td></tr>
+    <tr><td>PostgreSQL JDBC Driver</td><td><code>postgresql-42.7.7.jar</code></td></tr>
+    <tr><td>PostgreSQL Username</td><td><code>snowflake_admin</code></td></tr>
+    <tr><td>Publication Name</td><td><code>openflow_publication</code></td></tr>
+</table>
+
+<h4>3. Configure Destination Parameters</h4>
+<table>
+    <tr><th>Parameter</th><th>Value</th></tr>
+    <tr><td>Destination Database</td><td><code>Okta_PGCDC_DB</code></td></tr>
+    <tr><td>Snowflake Authentication Strategy</td><td><code>SNOWFLAKE_MANAGED</code></td></tr>
+    <tr><td>Snowflake Role</td><td><code>Postgres_HOL_ROLE</code></td></tr>
+    <tr><td>Snowflake Warehouse</td><td><code>Okta_PGCDC_WH</code></td></tr>
+</table>
+
+<h4>4. Enable and Start</h4>
+<ul>
+    <li>Right-click connector → <strong>Enable all controller services</strong></li>
+    <li>Right-click connector → <strong>Start</strong></li>
+</ul>
+
+<h3>Step 12h: Verify Data Flow</h3>
+<pre><code>@setup/12_postgres_activity_logs/05_verification_queries.sql</code></pre>
+
+<div class="important">
+<strong>Important:</strong> Schema and table names from Postgres are lowercase and require double quotes: <code>"public"</code>, <code>"users"</code>, <code>"user_id"</code>, etc.
+</div>
+
+<hr>
+
+<h2 id="questions">Sample Questions</h2>
+
+<h3>Account Health & Expansion</h3>
+<ul>
+    <li>"Which accounts are at risk of churning?"</li>
+    <li>"What products has Microsoft added or churned over time?"</li>
+    <li>"Show me accounts with Critical health score and upcoming renewals"</li>
+</ul>
+
+<h3>Pricing & Discounts</h3>
+<ul>
+    <li>"Which accounts have discounts above the 15% target?"</li>
+    <li>"What is the optimal discount for a customer like Apple?"</li>
+</ul>
+
+<h3>Lost Opportunities</h3>
+<ul>
+    <li>"Why did we lose the expansion deal with Google?"</li>
+    <li>"What are the most common reasons for lost opportunities?"</li>
+</ul>
+
+<h3>Call Transcript Insights</h3>
+<ul>
+    <li>"What did our last call with Microsoft reveal about their budget?"</li>
+    <li>"Which customers mentioned layoffs in recent calls?"</li>
+</ul>
+
+<h3>Contract Details</h3>
+<ul>
+    <li>"What products are included in the Walmart contract?"</li>
+    <li>"Show me all contracts with auto-renewal disabled"</li>
+</ul>
+
+<h3>Public Company Research (Web Search)</h3>
+<ul>
+    <li>"What recent news is there about Amazon's security initiatives?"</li>
+    <li>"Find 10K filing information for JPMorgan Chase"</li>
+</ul>
+
+<h3>Activity & Usage Analytics</h3>
+<ul>
+    <li>"What is the license assignment rate for SSO across accounts?"</li>
+    <li>"Which accounts have the highest MFA adoption rates?"</li>
+    <li>"Show authentication failures by device type"</li>
+</ul>
+
+<hr>
+
+<h2 id="summary">Data Summary</h2>
+
+<p>After completing all steps:</p>
+
+<table>
+    <tr><th>Component</th><th>Count</th></tr>
+    <tr><td>Accounts</td><td>250 Fortune 500 companies</td></tr>
+    <tr><td>Contracts</td><td>250 (one per account)</td></tr>
+    <tr><td>Subscriptions</td><td>~970 (2-6 products per contract)</td></tr>
+    <tr><td>Opportunities</td><td>500 (60% won, 40% lost)</td></tr>
+    <tr><td>Gong Transcripts</td><td>~150 (25% of accounts)</td></tr>
+    <tr><td>Sales Teams</td><td>11 (by territory)</td></tr>
+    <tr><td>Users (Postgres)</td><td>~1,500</td></tr>
+    <tr><td>Product Assignments</td><td>~1,700</td></tr>
+    <tr><td>Auth Logs</td><td>~3,500+</td></tr>
+</table>
+
+<h3>Identity Products</h3>
+
+<table>
+    <tr><th>Product</th><th>Code</th><th>Price/User/Month</th></tr>
+    <tr><td>Single Sign-On (SSO)</td><td>SSO</td><td>$6.00</td></tr>
+    <tr><td>Multi-Factor Authentication (MFA)</td><td>MFA</td><td>$3.00</td></tr>
+    <tr><td>Adaptive MFA</td><td>AMFA</td><td>$6.00</td></tr>
+    <tr><td>Universal Directory</td><td>UD</td><td>$2.00</td></tr>
+    <tr><td>Lifecycle Management</td><td>LCM</td><td>$8.00</td></tr>
+    <tr><td>API Access Management</td><td>API</td><td>$4.00</td></tr>
+    <tr><td>Device Access</td><td>DA</td><td>$5.00</td></tr>
+    <tr><td>Access Governance</td><td>AG</td><td>$8.00</td></tr>
+    <tr><td>Privileged Access</td><td>PAM</td><td>$15.00</td></tr>
+    <tr><td>Workflows</td><td>WF</td><td>$4.00</td></tr>
+    <tr><td>Identity Threat Protection</td><td>ITP</td><td>$5.00</td></tr>
+    <tr><td>Identity Security Posture Management</td><td>ISPM</td><td>$6.00</td></tr>
+    <tr><td>Access Gateway</td><td>AGW</td><td>$5.00</td></tr>
+    <tr><td>Secure Partner Access</td><td>SPA</td><td>$4.00</td></tr>
+</table>
+
+<hr>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<h3>Dynamic tables not refreshing</h3>
+<pre><code>ALTER DYNAMIC TABLE PROD.FINAL.ACCOUNT_DAILY REFRESH;</code></pre>
+
+<h3>Agent not appearing in Snowflake Intelligence</h3>
+<p>Ensure grants are applied and user has access to <code>SNOWFLAKE_INTELLIGENCE.AGENTS</code> schema.</p>
+
+<h3>Postgres CDC not syncing</h3>
+<ol>
+    <li>Verify publication exists: <code>SELECT * FROM pg_publication;</code></li>
+    <li>Check replication slot: <code>SELECT * FROM pg_replication_slots;</code></li>
+    <li>Verify user has REPLICATION privilege</li>
+</ol>
+
+<h3>Case sensitivity issues with CDC tables</h3>
+<p>PostgreSQL objects sync as lowercase. Use double quotes:</p>
+<pre><code>-- Correct
+SELECT * FROM Okta_PGCDC_DB."public"."users";
+
+-- Incorrect (will fail)
+SELECT * FROM Okta_PGCDC_DB.public.USERS;</code></pre>
+
+<hr>
+
+<h2>Reference Documentation</h2>
+<ul>
+    <li><a href="https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-agents">Snowflake Cortex Agents</a></li>
+    <li><a href="https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-search/cortex-search-overview">Cortex Search</a></li>
+    <li><a href="https://docs.snowflake.com/en/user-guide/snowflake-postgres/about">Snowflake Postgres</a></li>
+    <li><a href="https://docs.snowflake.com/en/user-guide/data-load-openflow">Openflow CDC</a></li>
+</ul>
+
+</body>
+</html>
