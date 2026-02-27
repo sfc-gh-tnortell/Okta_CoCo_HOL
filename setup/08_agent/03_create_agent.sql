@@ -1,5 +1,5 @@
 -- ============================================================
--- Step 9b: Create Customer 360 Cortex Agent
+-- Step 8c: Create Customer 360 Cortex Agent
 -- ============================================================
 -- Agent for Snowflake Intelligence with all data sources
 

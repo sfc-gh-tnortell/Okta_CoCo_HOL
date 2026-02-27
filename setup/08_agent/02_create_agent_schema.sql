@@ -1,5 +1,5 @@
 -- ============================================================
--- Step 9a: Create Agent Schema
+-- Step 8b: Create Agent Schema
 -- ============================================================
 
 CREATE DATABASE IF NOT EXISTS SNOWFLAKE_INTELLIGENCE;

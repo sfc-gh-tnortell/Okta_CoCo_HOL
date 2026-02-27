@@ -1,0 +1,18 @@
+-- ============================================================
+-- Step 8a: Enable Web Search (Account Level)
+-- ============================================================
+-- Web search must be enabled at the account level BEFORE creating
+-- an agent that uses the web_search tool.
+--
+-- This step must be done via Snowsight UI:
+-- 1. Sign in to Snowsight
+-- 2. Navigate to AI & ML → Agents → Settings (gear icon)
+-- 3. Toggle "Web search" to enable
+--
+-- Note: This is a one-time account-level setting. Once enabled,
+-- individual agents can be configured to use web search.
+-- ============================================================
+
+-- Verify web search is available (this query will work after enabling)
+-- You can test web search is enabled by checking if agent creation
+-- with web_search tool succeeds in the next step.

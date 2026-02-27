@@ -10,11 +10,11 @@ This comprehensive guide covers the full setup of the Okta Customer 360 demo env
 2. [Prerequisites](#prerequisites)
 3. [Part 1: Core Setup (Steps 1-9)](#part-1-core-setup-steps-1-9)
 4. [Part 2: Gong Transcript Analysis (Step 10)](#part-2-gong-transcript-analysis-step-10)
-5. [Part 3: Web Search Integration (Step 11)](#part-3-web-search-integration-step-11)
-6. [Part 4: Postgres Activity Logs Pipeline (Step 12)](#part-4-postgres-activity-logs-pipeline-step-12)
-7. [Sample Questions](#sample-questions)
-8. [Data Summary](#data-summary)
-9. [Troubleshooting](#troubleshooting)
+5. [Part 3: Postgres Activity Logs Pipeline (Step 11)](#part-3-postgres-activity-logs-pipeline-step-11)
+6. [Sample Questions](#sample-questions)
+7. [Data Summary](#data-summary)
+8. [Troubleshooting](#troubleshooting)
+9. [Teardown / Cleanup](#teardown--cleanup)
 
 ---
 
@@ -84,7 +84,7 @@ This comprehensive guide covers the full setup of the Okta Customer 360 demo env
   ```bash
   pip install snowflake-connector-python reportlab
   ```
-- For Step 12: Existing Openflow deployment
+- For Step 11: Existing Openflow deployment
 
 ---
 
@@ -126,7 +126,6 @@ setup/
 @setup/03_data_generation/04_insert_contracts.sql
 @setup/03_data_generation/05_insert_subscriptions.sql
 @setup/03_data_generation/06_insert_opportunities.sql
-@setup/03_data_generation/07_insert_gong_transcripts.sql
 ```
 
 ### Step 4: Sales Teams
@@ -193,17 +192,30 @@ Create the semantic view and configure Cortex Analyst to enable natural language
 4. Click **Create**
 5. Test with a sample question like "Show me accounts at risk of churning"
 
-### Step 8: Cortex Agent
+### Step 8: Cortex Agent (with Web Search)
 
-Create the Cortex Agent for Snowflake Intelligence with access to all data sources.
+Create the Cortex Agent for Snowflake Intelligence with access to all data sources including web search.
 
-**Option A: Via SQL**
+**8a: Enable Web Search (Account Level)**
+
+Web search must be enabled at the account level BEFORE creating the agent:
+1. Sign in to **Snowsight**
+2. Navigate to **AI & ML → Agents → Settings** (gear icon)
+3. Toggle **Web search** to enable
+
+> **Note**: This is a one-time account-level setting requiring ACCOUNTADMIN.
+
+**8b: Create Agent Schema**
 ```sql
-@setup/08_agent/01_create_agent_schema.sql
-@setup/08_agent/02_create_agent.sql
+@setup/08_agent/02_create_agent_schema.sql
 ```
 
-**Option B: Via Snowsight UI**
+**8c: Create Agent**
+```sql
+@setup/08_agent/03_create_agent.sql
+```
+
+**Alternative: Via Snowsight UI**
 1. Navigate to **AI & ML → Snowflake Intelligence → Agents**
 2. Click **+ Agent**
 3. Configure basic settings:
@@ -317,62 +329,14 @@ Add the `ACCOUNT_HEALTH_SCORE` table to your semantic view YAML (see `README.md`
 
 ---
 
-## Part 3: Web Search Integration (Step 11)
-
-Enable web search for your Cortex Agent to access public company information, news, and 10K filings.
-
-### Folder Structure
-
-```
-setup/11_web_search/
-└── README.md                     # Step-by-step UI guide
-```
-
-### Step 11a: Enable Web Search at Account Level
-
-1. Sign in to **Snowsight**
-2. Navigate to **AI & ML → Agents → Settings**
-3. Toggle **Web search** to enable
-
-### Step 11b: Add Web Search Tool to Agent
-
-Via SQL:
-
-```sql
-CREATE OR REPLACE CORTEX AGENT SNOWFLAKE_INTELLIGENCE.AGENTS.CUSTOMER_360_AGENT
-COMMENT = 'Customer 360 Agent with web search enabled'
-MODEL = 'claude-3-5-sonnet'
-TOOLS = (
-    {
-        'type': 'cortex_analyst_text_to_sql',
-        'semantic_view': 'PROD.FINAL.CUSTOMER_360_SEMANTIC_VIEW'
-    },
-    {
-        'type': 'cortex_search',
-        'name': 'transcript_search',
-        'cortex_search_service': 'PROD.FINAL.TRANSCRIPT_SEARCH',
-        'description': 'Search call transcripts for customer insights',
-        'max_results': 10
-    },
-    {
-        'type': 'web_search',
-        'name': 'company_research',
-        'description': 'Search for publicly available information about companies'
-    }
-)
-SYSTEM_PROMPT = 'You are a Customer 360 AI assistant with access to structured data, call transcripts, and web search.';
-```
-
----
-
-## Part 4: Postgres Activity Logs Pipeline (Step 12)
+## Part 3: Postgres Activity Logs Pipeline (Step 11)
 
 Stream real-time Okta activity logs from Snowflake Postgres to Snowflake tables via Openflow CDC.
 
 ### Folder Structure
 
 ```
-setup/12_postgres_activity_logs/
+setup/11_postgres_activity_logs/
 ├── 01_create_network_rule.sql     # Network rule for Postgres
 ├── 02_create_postgres_tables.sql  # DDL for Postgres tables
 ├── 03_enable_replication.sql      # Enable CDC replication
@@ -382,13 +346,13 @@ setup/12_postgres_activity_logs/
 └── README.md                      # Detailed guide
 ```
 
-### Step 12a: Create Network Rule
+### Step 11a: Create Network Rule
 
 ```sql
-@setup/12_postgres_activity_logs/01_create_network_rule.sql
+@setup/11_postgres_activity_logs/01_create_network_rule.sql
 ```
 
-### Step 12b: Create Postgres Instance (Snowsight UI)
+### Step 11b: Create Postgres Instance (Snowsight UI)
 
 1. Navigate to **Data → Databases → + Database**
 2. Select **Postgres** as the database type
@@ -399,35 +363,35 @@ setup/12_postgres_activity_logs/
    - **Network Policy**: `POSTGRES_ACCESS_POLICY`
 4. Save connection credentials
 
-### Step 12c: Create Postgres Tables
+### Step 11c: Create Postgres Tables
 
 Connect to your Postgres instance and run:
 
 ```sql
-@setup/12_postgres_activity_logs/02_create_postgres_tables.sql
+@setup/11_postgres_activity_logs/02_create_postgres_tables.sql
 ```
 
-### Step 12d: Enable Replication
+### Step 11d: Enable Replication
 
 ```sql
-@setup/12_postgres_activity_logs/03_enable_replication.sql
+@setup/11_postgres_activity_logs/03_enable_replication.sql
 ```
 
-### Step 12e: Generate Sample Data
+### Step 11e: Generate Sample Data
 
 ```sql
-@setup/12_postgres_activity_logs/generate_activity_data.sql
+@setup/11_postgres_activity_logs/generate_activity_data.sql
 ```
 
-### Step 12f: Configure External Access for Openflow
+### Step 11f: Configure External Access for Openflow
 
 Update the network rule with your Postgres host, then run:
 
 ```sql
-@setup/12_postgres_activity_logs/04_configure_external_access.sql
+@setup/11_postgres_activity_logs/04_configure_external_access.sql
 ```
 
-### Step 12g: Configure Openflow CDC Pipeline
+### Step 11g: Configure Openflow CDC Pipeline
 
 1. **Create Runtime**: Navigate to **Data → Ingestion → Openflow → Runtimes**
    - Name: `okta-activity-logs-runtime`
@@ -463,10 +427,10 @@ Update the network rule with your Postgres host, then run:
    - Right-click connector → **Enable all controller services**
    - Right-click connector → **Start**
 
-### Step 12h: Verify Data Flow
+### Step 11h: Verify Data Flow
 
 ```sql
-@setup/12_postgres_activity_logs/05_verification_queries.sql
+@setup/11_postgres_activity_logs/05_verification_queries.sql
 ```
 
 > **Important**: Schema and table names from Postgres are lowercase and require double quotes: `"public"`, `"users"`, `"user_id"`, etc.
@@ -570,6 +534,30 @@ SELECT * FROM Okta_PGCDC_DB."public"."users";
 -- Incorrect (will fail)
 SELECT * FROM Okta_PGCDC_DB.public.USERS;
 ```
+
+---
+
+## Teardown / Cleanup
+
+To completely remove all objects created in this lab:
+
+```sql
+@setup/99_teardown/teardown_all.sql
+```
+
+This script removes:
+- Cortex Agent (`CUSTOMER_360_AGENT`)
+- Cortex Search Services (`CONTRACT_SEARCH`, `TRANSCRIPT_SEARCH`)
+- Semantic View (`CUSTOMER_360_SEMANTIC_VIEW`)
+- `PROD` database (all schemas, tables, stages)
+- `SNOWFLAKE_INTELLIGENCE` database
+- Postgres CDC objects (`Okta_PGCDC_DB`, `Postgres_HOL_ROLE`, `Okta_PGCDC_WH`)
+- Network policies and integrations
+
+**Manual cleanup required:**
+1. **Snowflake Postgres**: Delete via UI (Data → Databases → your Postgres instance → Delete)
+2. **Openflow Runtime**: Stop and delete connectors/runtime via UI
+3. **Cortex Analyst**: Delete via UI (AI & ML → Cortex Analyst)
 
 ---
 
