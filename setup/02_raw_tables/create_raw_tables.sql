@@ -41,7 +41,8 @@ CREATE OR REPLACE TABLE PROD.RAW.SFDC_ACCOUNT (
     TOP_ACCOUNT BOOLEAN,
     NAMED_ACCOUNT BOOLEAN,
     IS_CUSTOMER BOOLEAN,
-    PAYING_CUSTOMER BOOLEAN
+    PAYING_CUSTOMER BOOLEAN,
+    SALES_TEAM_ID VARCHAR(10)
 );
 
 -- ============================================================
@@ -140,7 +141,23 @@ CREATE OR REPLACE TABLE PROD.RAW.SFDC_OPPORTUNITY (
 );
 
 -- ============================================================
+-- 2f: SALES_TEAM - Sales team assignments by territory
+-- ============================================================
+
+CREATE OR REPLACE TABLE PROD.RAW.SALES_TEAM (
+    TEAM_ID VARCHAR(10) NOT NULL PRIMARY KEY,
+    TERRITORY VARCHAR(50),
+    TIMEZONE VARCHAR(50),
+    REGION VARCHAR(50),
+    ACCOUNT_EXECUTIVE VARCHAR(100),
+    SALES_ENGINEER VARCHAR(100),
+    SDR VARCHAR(100),
+    CREATED_DATE TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
+);
+
+-- ============================================================
 -- Verify tables created
 -- ============================================================
 
 SHOW TABLES LIKE 'SFDC%' IN SCHEMA PROD.RAW;
+SHOW TABLES LIKE 'SALES_TEAM' IN SCHEMA PROD.RAW;

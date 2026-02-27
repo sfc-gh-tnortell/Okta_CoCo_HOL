@@ -11,9 +11,9 @@
 USE ROLE ACCOUNTADMIN;
 
 -- ============================================================
--- STEP 1: Drop Cortex Agent
+-- STEP 1: Drop Agent
 -- ============================================================
-DROP CORTEX AGENT IF EXISTS SNOWFLAKE_INTELLIGENCE.AGENTS.CUSTOMER_360_AGENT;
+DROP AGENT IF EXISTS SNOWFLAKE_INTELLIGENCE.AGENTS.CUSTOMER_360_AGENT;
 
 -- ============================================================
 -- STEP 2: Drop Cortex Search Services

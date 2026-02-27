@@ -1,5 +1,5 @@
 -- ============================================================
--- Step 4b: Insert Sales Team Data
+-- Step 3h: Insert Sales Team Data
 -- ============================================================
 
 INSERT INTO PROD.RAW.SALES_TEAM (TEAM_ID, TERRITORY, TIMEZONE, REGION, ACCOUNT_EXECUTIVE, SALES_ENGINEER, SDR)

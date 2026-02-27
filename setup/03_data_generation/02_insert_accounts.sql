@@ -12,7 +12,7 @@ INSERT INTO PROD.RAW.SFDC_ACCOUNT (
     BILLING_STREET, BILLING_CITY, BILLING_STATE, BILLING_POSTALCODE, BILLING_COUNTRY,
     GEOGRAPHY, TERRITORY, TIMEZONE, INDUSTRY, SUB_INDUSTRY, PRIMARY_INDUSTRY,
     ANNUAL_REVENUE, NUMBER_OF_EMPLOYEES, WEBSITE, HEALTHSCORE,
-    TOP_ACCOUNT, NAMED_ACCOUNT, IS_CUSTOMER, PAYING_CUSTOMER
+    TOP_ACCOUNT, NAMED_ACCOUNT, IS_CUSTOMER, PAYING_CUSTOMER, SALES_TEAM_ID
 )
 WITH fortune500_companies AS (
     SELECT column1 AS company_name, column2 AS industry, column3 AS sub_industry, 
@@ -384,7 +384,14 @@ SELECT
     CASE WHEN revenue_billions > 100 THEN TRUE ELSE FALSE END AS top_account,
     CASE WHEN revenue_billions > 50 THEN TRUE ELSE FALSE END AS named_account,
     TRUE AS is_customer,
-    TRUE AS paying_customer
+    TRUE AS paying_customer,
+    -- Assign sales team based on territory (distribute across teams in same territory)
+    CASE territory
+        WHEN 'West' THEN 'TEAM00' || (MOD(ABS(HASH(company_name)), 3) + 1)::VARCHAR
+        WHEN 'Mountain' THEN 'TEAM00' || (MOD(ABS(HASH(company_name)), 2) + 4)::VARCHAR
+        WHEN 'Central' THEN 'TEAM00' || (MOD(ABS(HASH(company_name)), 3) + 6)::VARCHAR
+        ELSE 'TEAM0' || (MOD(ABS(HASH(company_name)), 3) + 9)::VARCHAR
+    END AS sales_team_id
 FROM timezone_mapping
 WHERE rn <= 250;
 
