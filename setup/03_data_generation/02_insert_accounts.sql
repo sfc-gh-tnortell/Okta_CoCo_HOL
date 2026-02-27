@@ -317,7 +317,7 @@ numbered_companies AS (
         *,
         ROW_NUMBER() OVER (ORDER BY revenue_billions DESC) AS rn
     FROM fortune500_companies
-    WHERE rn <= 250
+    QUALIFY rn <= 250
 ),
 timezone_mapping AS (
     SELECT 

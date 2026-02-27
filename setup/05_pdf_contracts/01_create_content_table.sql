@@ -1,5 +1,5 @@
 -- ============================================================
--- Step 5c: Create Contract Content Table with Enrichment
+-- Step 5a: Create Contract Content Table with Enrichment
 -- ============================================================
 -- Enrich parsed PDF content with metadata from CRM tables
 
@@ -17,8 +17,8 @@ SELECT
     a.ACCOUNT_NAME,
     a.INDUSTRY,
     cs.CONTENT AS CONTRACT_TEXT,
-    -- Generate summary using Cortex LLM
-    SNOWFLAKE.CORTEX.SUMMARIZE(cs.CONTENT) AS CONTRACT_SUMMARY,
+    -- Generate summary using AI SUMMARIZE
+    AI_SUMMARIZE(cs.CONTENT) AS CONTRACT_SUMMARY,
     -- Get products list from subscriptions
     (
         SELECT LISTAGG(p.PRODUCT_NAME, ', ') WITHIN GROUP (ORDER BY p.PRODUCT_NAME)

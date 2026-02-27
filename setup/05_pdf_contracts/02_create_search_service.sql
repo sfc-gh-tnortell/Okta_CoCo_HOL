@@ -1,5 +1,5 @@
 -- ============================================================
--- Step 5d: Create Cortex Search Service for Contracts
+-- Step 5b: Create Cortex Search Service for Contracts
 -- ============================================================
 -- Enable semantic search over contract documents
 

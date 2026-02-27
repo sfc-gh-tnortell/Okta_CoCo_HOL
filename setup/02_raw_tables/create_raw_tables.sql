@@ -143,4 +143,4 @@ CREATE OR REPLACE TABLE PROD.RAW.SFDC_OPPORTUNITY (
 -- Verify tables created
 -- ============================================================
 
-SHOW TABLES IN SCHEMA PROD.RAW LIKE 'SFDC%';
+SHOW TABLES LIKE 'SFDC%' IN SCHEMA PROD.RAW;

@@ -1,5 +1,5 @@
 -- ============================================================
--- Step 5a: Create Stage for PDF Contracts
+-- Step 3d: Create Stage for PDF Contracts
 -- ============================================================
 
 USE ROLE SYSADMIN;
