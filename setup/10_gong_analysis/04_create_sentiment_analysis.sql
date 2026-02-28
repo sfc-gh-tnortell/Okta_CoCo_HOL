@@ -1,6 +1,36 @@
--- Step 6: Create Composite Health Score View
--- Combines sentiment, product coverage, and peer comparison into a single health score
+-- ============================================================
+-- Step 10d: Create Sentiment Analysis and Health Score
+-- ============================================================
+-- Extracts sentiment from transcripts and creates composite health score
 
+-- Step 4a: Create Sentiment Table (Metadata Only)
+-- Extracts sentiment from source table, storing only metadata (no content duplication)
+CREATE OR REPLACE TABLE PROD.RAW.GONG_CALL_SENTIMENT AS
+SELECT
+    FILE_NAME,
+    ACCOUNT_NAME,
+    CALL_DATE,
+    REPLACE(SPLIT_PART(FILE_NAME, '_call_', 2), '.txt', '')::INT AS CALL_NUMBER,
+    AI_SENTIMENT(CONTENT):categories[0]:sentiment::VARCHAR AS SENTIMENT_CATEGORY
+FROM PROD.RAW.GONG_TRANSCRIPT_SOURCE;
+
+-- Step 4b: Create Account-Level Sentiment Summary
+CREATE OR REPLACE TABLE PROD.FINAL.ACCOUNT_CALL_SENTIMENT AS
+SELECT
+    ACCOUNT_NAME,
+    COUNT(*) AS TOTAL_CALLS,
+    SUM(CASE WHEN SENTIMENT_CATEGORY = 'positive' THEN 1 ELSE 0 END) AS POSITIVE_CALLS,
+    SUM(CASE WHEN SENTIMENT_CATEGORY = 'negative' THEN 1 ELSE 0 END) AS NEGATIVE_CALLS,
+    SUM(CASE WHEN SENTIMENT_CATEGORY = 'neutral' THEN 1 ELSE 0 END) AS NEUTRAL_CALLS,
+    ROUND(SUM(CASE WHEN SENTIMENT_CATEGORY = 'positive' THEN 1 
+                   WHEN SENTIMENT_CATEGORY = 'negative' THEN -1 
+                   ELSE 0 END)::FLOAT / COUNT(*), 3) AS SENTIMENT_SCORE,
+    MAX(CALL_DATE) AS LAST_CALL_DATE
+FROM PROD.RAW.GONG_CALL_SENTIMENT
+GROUP BY ACCOUNT_NAME;
+
+-- Step 4c: Create Composite Health Score View
+-- Combines sentiment, product coverage, and peer comparison into a single health score
 CREATE OR REPLACE VIEW PROD.FINAL.ACCOUNT_HEALTH_SCORE AS
 WITH account_products AS (
     SELECT

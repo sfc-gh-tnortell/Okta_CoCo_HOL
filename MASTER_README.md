@@ -41,7 +41,7 @@ This comprehensive guide covers the full setup of the Okta Customer 360 demo env
 │  │                    Customer 360 Agent                            │   │
 │  │  ┌──────────────┐  ┌──────────────┐  ┌────────────────────────┐ │   │
 │  │  │Cortex Analyst│  │Cortex Search │  │     Web Search         │ │   │
-│  │  │(Semantic View)│  │(Transcripts) │  │(Public Company Info)  │ │   │
+│  │  │(Semantic View)│  │ (Contracts)  │  │(Public Company Info)  │ │   │
 │  │  └──────────────┘  └──────────────┘  └────────────────────────┘ │   │
 │  └─────────────────────────────────────────────────────────────────┘   │
 │                                │                                        │
@@ -95,10 +95,9 @@ This comprehensive guide covers the full setup of the Okta Customer 360 demo env
 ```
 setup/
 ├── 01_database/          # Create database and schemas
-├── 02_raw_tables/        # Create source tables (SFDC_* + GONG)
-├── 03_data_generation/   # Generate synthetic data
-├── 04_sales_teams/       # Create sales team mappings
-├── 05_pdf_contracts/     # Parse PDF contracts and create search service
+├── 02_raw_tables/        # Create source tables (SFDC_*, SALES_TEAM)
+├── 03_data_generation/   # Generate synthetic data + parse contracts
+├── 05_pdf_contracts/     # Create enriched content + search service
 ├── 06_final_schema/      # Create dynamic tables
 ├── 07_semantic_view/     # Create semantic view for Cortex Analyst
 ├── 08_agent/             # Create Cortex Agent
@@ -111,90 +110,78 @@ setup/
 @setup/01_database/01_create_database.sql
 ```
 
+Creates the PROD database with RAW and FINAL schemas.
+
 ### Step 2: Create Raw Tables
 
 ```sql
 @setup/02_raw_tables/create_raw_tables.sql
 ```
 
+Creates tables: SFDC_ACCOUNT, SFDC_PRODUCT, SFDC_CONTRACT, SFDC_SUBSCRIPTION, SFDC_OPPORTUNITY, SALES_TEAM
+
+Verify with:
+```sql
+SHOW TABLES LIKE 'SFDC%' IN SCHEMA PROD.RAW;
+```
+
 ### Step 3: Generate Data
+
+Run these scripts in order:
 
 ```sql
 @setup/03_data_generation/01_insert_products.sql
 @setup/03_data_generation/02_insert_accounts.sql
 @setup/03_data_generation/03_fix_timezone_distribution.sql
-@setup/03_data_generation/04_insert_contracts.sql
-@setup/03_data_generation/05_insert_subscriptions.sql
-@setup/03_data_generation/06_insert_opportunities.sql
+@setup/03_data_generation/04_create_contract_stage.sql
 ```
 
-### Step 4: Sales Teams
-
-```sql
-@setup/04_sales_teams/01_create_sales_team_table.sql
-@setup/04_sales_teams/02_insert_sales_teams.sql
-```
-
-### Step 5: PDF Contracts Pipeline
-
-This step uploads PDF contracts, parses them, and creates a Cortex Search service.
-
-**5a: Create Stage**
-```sql
-@setup/05_pdf_contracts/01_create_stage.sql
-```
-
-Then upload the PDFs via Snowsight:
+**Upload PDF contracts:**
 1. Navigate to **Data → Databases → PROD → RAW → Stages**
 2. Click on `CONTRACTS_STAGE`
 3. Click **+ Files** → Select all PDF files from `unstructured_data/contracts_pdf/`
 4. Click **Upload**
 
-**5b: Parse PDFs into Source Table**
+Then continue:
 ```sql
-@setup/05_pdf_contracts/02_create_source_table.sql
+@setup/03_data_generation/05_insert_contracts.sql
+@setup/03_data_generation/06_insert_subscriptions.sql
+@setup/03_data_generation/07_insert_opportunities.sql
+@setup/03_data_generation/08_insert_sales_teams.sql
 ```
 
-**5c: Create Enriched Content Table**
-```sql
-@setup/05_pdf_contracts/03_create_content_table.sql
-```
+### Step 5: PDF Contracts Pipeline
 
-**5d: Create Cortex Search Service**
+Create enriched content and search service:
+
 ```sql
-@setup/05_pdf_contracts/04_create_search_service.sql
+@setup/05_pdf_contracts/01_create_content_table.sql
+@setup/05_pdf_contracts/02_create_search_service.sql
 ```
 
 ### Step 6: Final Schema (Dynamic Tables)
 
 ```sql
-@setup/06_final_schema/01_create_final_schema.sql
-@setup/06_final_schema/02_create_account_daily_dt.sql
-@setup/06_final_schema/03_create_subscription_daily_dt.sql
-@setup/06_final_schema/04_create_opportunity_daily_dt.sql
+@setup/06_final_schema/01_create_account_daily_dt.sql
+@setup/06_final_schema/02_create_subscription_daily_dt.sql
+@setup/06_final_schema/03_create_opportunity_daily_dt.sql
 ```
 
-### Step 7: Semantic View & Cortex Analyst
+### Step 7: Semantic View
 
-Create the semantic view and configure Cortex Analyst to enable natural language queries.
+Create the semantic view for Cortex Analyst:
 
-**7a: Create Semantic View**
+**Option A: SQL Syntax**
 ```sql
 @setup/07_semantic_view/01_create_semantic_view.sql
 ```
 
-**7b: Create Cortex Analyst in Snowsight**
-1. Navigate to **AI & ML → Cortex Analyst**
-2. Click **+ Analyst**
-3. Configure:
-   - **Name**: `Customer 360 Analyst`
-   - **Semantic View**: Select `PROD.FINAL.CUSTOMER_360_SEMANTIC_VIEW`
-4. Click **Create**
-5. Test with a sample question like "Show me accounts at risk of churning"
+**Option B: YAML Syntax**
+```sql
+@setup/07_semantic_view/02_create_semantic_view_yaml.sql
+```
 
 ### Step 8: Cortex Agent (with Web Search)
-
-Create the Cortex Agent for Snowflake Intelligence with access to all data sources including web search.
 
 **8a: Enable Web Search (Account Level)**
 
@@ -215,41 +202,12 @@ Web search must be enabled at the account level BEFORE creating the agent:
 @setup/08_agent/03_create_agent.sql
 ```
 
-**Alternative: Via Snowsight UI**
-1. Navigate to **AI & ML → Snowflake Intelligence → Agents**
-2. Click **+ Agent**
-3. Configure basic settings:
-   - **Name**: `CUSTOMER_360_AGENT`
-   - **Database**: `SNOWFLAKE_INTELLIGENCE`
-   - **Schema**: `AGENTS`
-   - **Model**: `claude-3-5-sonnet`
-4. Add tools:
+The agent includes:
+- **Analyst**: Cortex Analyst with semantic view for structured data queries
+- **ContractSearch**: Cortex Search over contract documents
+- **WebSearch**: Web search for public company information
 
-   **Tool 1 - Cortex Analyst (Semantic View)**:
-   - Click **+ Add Tool** → **Cortex Analyst**
-   - Select semantic view: `PROD.FINAL.CUSTOMER_360_SEMANTIC_VIEW`
-   
-   **Tool 2 - Contract Search**:
-   - Click **+ Add Tool** → **Cortex Search**
-   - Name: `contract_search`
-   - Service: `PROD.FINAL.CONTRACT_SEARCH`
-   - Description: `Search contract documents for specific terms, customer names, products, or pricing information.`
-   - Max Results: `10`
-   
-   **Tool 3 - Transcript Search**:
-   - Click **+ Add Tool** → **Cortex Search**
-   - Name: `transcript_search`
-   - Service: `PROD.FINAL.TRANSCRIPT_SEARCH`
-   - Description: `Search Gong call transcripts for customer conversations and business insights.`
-   - Max Results: `10`
-   
-   **Tool 4 - Web Search**:
-   - Click **+ Add Tool** → **Web Search**
-   - Name: `company_research`
-   - Description: `Search for publicly available information about companies including news and filings.`
-
-5. Add system prompt (see `02_create_agent.sql` for full prompt)
-6. Click **Create**
+> **Note**: TranscriptSearch is added later in Step 10 after creating the Gong analysis pipeline.
 
 **Verify in Snowflake Intelligence:**
 1. Navigate to **AI & ML → Snowflake Intelligence**
@@ -272,13 +230,11 @@ This step creates a semantic search service over Gong call transcripts and build
 
 ```
 setup/10_gong_analysis/
-├── 01_create_stage.sql           # Create stage and upload transcripts
-├── 02_create_source_table.sql    # Parse transcripts into table
-├── 03_create_search_service.sql  # Cortex Search on transcripts
-├── 04_create_sentiment_table.sql # Extract sentiment metadata
-├── 05_create_sentiment_summary.sql # Account-level sentiment
-├── 06_create_health_score.sql    # Composite health score view
-└── README.md                     # Detailed guide
+├── 01_create_stage.sql              # Create stage for transcripts
+├── 02_create_source_table.sql       # Parse transcripts into table
+├── 03_create_search_service.sql     # Cortex Search on transcripts
+├── 04_create_sentiment_analysis.sql # Sentiment extraction + health score
+├── 05_grant_permissions.sql         # Grant access to Gong objects
 ```
 
 ### Step 10a: Create Transcript Stage
@@ -305,27 +261,58 @@ Then upload `.txt` files via Snowsight:
 @setup/10_gong_analysis/03_create_search_service.sql
 ```
 
-### Step 10d: Create Sentiment Table
+### Step 10d: Create Sentiment Analysis & Health Score
 
 ```sql
-@setup/10_gong_analysis/04_create_sentiment_table.sql
+@setup/10_gong_analysis/04_create_sentiment_analysis.sql
 ```
 
-### Step 10e: Create Sentiment Summary
+This creates:
+- `PROD.RAW.GONG_CALL_SENTIMENT` - Per-call sentiment
+- `PROD.FINAL.ACCOUNT_CALL_SENTIMENT` - Account-level sentiment summary
+- `PROD.FINAL.ACCOUNT_HEALTH_SCORE` - Composite health score view
+
+### Step 10e: Grant Permissions
 
 ```sql
-@setup/10_gong_analysis/05_create_sentiment_summary.sql
+@setup/10_gong_analysis/05_grant_permissions.sql
 ```
 
-### Step 10f: Create Health Score View
+### Step 10f: Add TranscriptSearch to Agent (UI)
 
-```sql
-@setup/10_gong_analysis/06_create_health_score.sql
-```
+After creating the Transcript Search service, add it to the agent:
 
-### Step 10g: Add to Semantic View
+1. Navigate to **AI & ML → Snowflake Intelligence**
+2. Find `CUSTOMER_360_AGENT` and click the **three-dot menu** (⋮)
+3. Select **Edit**
+4. Scroll down to the **Tools** section
+5. Click **+ Add Tool**
+6. Select **Cortex Search** from the tool type dropdown
+7. Configure the tool:
+   - **Tool Name**: `TranscriptSearch`
+   - **Cortex Search Service**: Click the dropdown and select `PROD.FINAL.TRANSCRIPT_SEARCH`
+   - **Tool Description**: `Search Gong call transcripts for customer conversations, insights about fiscal planning, layoffs, tech changes, expansion opportunities, or competitive intelligence.`
+   - **Max Results**: `10`
+8. Click **Save** to update the agent
 
-Add the `ACCOUNT_HEALTH_SCORE` table to your semantic view YAML (see `README.md` in `10_gong_analysis/` for full YAML snippet).
+### Step 10g: Update Semantic View with Health Score (UI)
+
+The new `ACCOUNT_HEALTH_SCORE` view provides a composite health score based on Gong sentiment analysis. Update the semantic view to use this instead of the basic health score:
+
+1. Navigate to **AI & ML → Cortex Analyst**
+2. Find `CUSTOMER_360_SEMANTIC_VIEW` and click to edit
+3. **Add the Health Score table**:
+   - Click **+ Add Table**
+   - Select `PROD.FINAL.ACCOUNT_HEALTH_SCORE`
+   - Set **Unique Key**: `ACCOUNT_NAME`
+   - Add synonyms: `health`, `sentiment`
+4. **Add relationship**:
+   - Create relationship from `ACCOUNT_HEALTH_SCORE.ACCOUNT_NAME` to `ACCOUNT_DAILY.ACCOUNT_NAME`
+5. **Remove old health dimension**:
+   - Find and remove the `HEALTHSCORE` dimension from the accounts table (this was the basic health score from SFDC_ACCOUNT)
+6. **Update metrics**:
+   - Update `at_risk_accounts` metric to use `HEALTH_CATEGORY IN ('At Risk', 'Critical')` from health_scores table
+9. Click **Save** to update the semantic view
 
 ---
 
@@ -343,7 +330,6 @@ setup/11_postgres_activity_logs/
 ├── 04_configure_external_access.sql # External access for Openflow
 ├── 05_verification_queries.sql    # Verification and analytics queries
 ├── generate_activity_data.sql     # Sample data generation
-└── README.md                      # Detailed guide
 ```
 
 ### Step 11a: Create Network Rule
@@ -557,7 +543,6 @@ This script removes:
 **Manual cleanup required:**
 1. **Snowflake Postgres**: Delete via UI (Data → Databases → your Postgres instance → Delete)
 2. **Openflow Runtime**: Stop and delete connectors/runtime via UI
-3. **Cortex Analyst**: Delete via UI (AI & ML → Cortex Analyst)
 
 ---
 
@@ -565,5 +550,6 @@ This script removes:
 
 - [Snowflake Cortex Agents](https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-agents)
 - [Cortex Search](https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-search/cortex-search-overview)
+- [Semantic Views](https://docs.snowflake.com/en/user-guide/views-semantic/overview)
 - [Snowflake Postgres](https://docs.snowflake.com/en/user-guide/snowflake-postgres/about)
 - [Openflow CDC](https://docs.snowflake.com/en/user-guide/data-load-openflow)

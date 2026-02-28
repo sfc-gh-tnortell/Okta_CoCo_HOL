@@ -173,7 +173,7 @@
 │  │                    Customer 360 Agent                            │   │
 │  │  ┌──────────────┐  ┌──────────────┐  ┌────────────────────────┐ │   │
 │  │  │Cortex Analyst│  │Cortex Search │  │     Web Search         │ │   │
-│  │  │(Semantic View)│  │(Transcripts) │  │(Public Company Info)  │ │   │
+│  │  │(Semantic View)│  │ (Contracts)  │  │(Public Company Info)  │ │   │
 │  │  └──────────────┘  └──────────────┘  └────────────────────────┘ │   │
 │  └─────────────────────────────────────────────────────────────────┘   │
 │                                │                                        │
@@ -226,10 +226,9 @@
 <h3>Folder Structure</h3>
 <pre><code>setup/
 ├── 01_database/          # Create database and schemas
-├── 02_raw_tables/        # Create source tables (SFDC_* + GONG)
-├── 03_data_generation/   # Generate synthetic data
-├── 04_sales_teams/       # Create sales team mappings
-├── 05_pdf_contracts/     # Parse PDF contracts and create search service
+├── 02_raw_tables/        # Create source tables (SFDC_*, SALES_TEAM)
+├── 03_data_generation/   # Generate synthetic data + parse contracts
+├── 05_pdf_contracts/     # Create enriched content + search service
 ├── 06_final_schema/      # Create dynamic tables
 ├── 07_semantic_view/     # Create semantic view for Cortex Analyst
 ├── 08_agent/             # Create Cortex Agent
@@ -237,30 +236,22 @@
 
 <h3>Step 1: Database Setup</h3>
 <pre><code>@setup/01_database/01_create_database.sql</code></pre>
+<p>Creates the PROD database with RAW and FINAL schemas.</p>
 
 <h3>Step 2: Create Raw Tables</h3>
 <pre><code>@setup/02_raw_tables/create_raw_tables.sql</code></pre>
+<p>Creates tables: SFDC_ACCOUNT, SFDC_PRODUCT, SFDC_CONTRACT, SFDC_SUBSCRIPTION, SFDC_OPPORTUNITY, SALES_TEAM</p>
+<p>Verify with:</p>
+<pre><code>SHOW TABLES LIKE 'SFDC%' IN SCHEMA PROD.RAW;</code></pre>
 
 <h3>Step 3: Generate Data</h3>
+<p>Run these scripts in order:</p>
 <pre><code>@setup/03_data_generation/01_insert_products.sql
 @setup/03_data_generation/02_insert_accounts.sql
 @setup/03_data_generation/03_fix_timezone_distribution.sql
-@setup/03_data_generation/04_insert_contracts.sql
-@setup/03_data_generation/05_insert_subscriptions.sql
-@setup/03_data_generation/06_insert_opportunities.sql</code></pre>
+@setup/03_data_generation/04_create_contract_stage.sql</code></pre>
 
-<h3>Step 4: Sales Teams</h3>
-<pre><code>@setup/04_sales_teams/01_create_sales_team_table.sql
-@setup/04_sales_teams/02_insert_sales_teams.sql</code></pre>
-
-<h3>Step 5: PDF Contracts Pipeline</h3>
-
-<p>This step uploads PDF contracts, parses them, and creates a Cortex Search service.</p>
-
-<h4>5a: Create Stage</h4>
-<pre><code>@setup/05_pdf_contracts/01_create_stage.sql</code></pre>
-
-<p>Then upload the PDFs via Snowsight:</p>
+<p><strong>Upload PDF contracts:</strong></p>
 <ol>
     <li>Navigate to <strong>Data → Databases → PROD → RAW → Stages</strong></li>
     <li>Click on <code>CONTRACTS_STAGE</code></li>
@@ -268,45 +259,32 @@
     <li>Click <strong>Upload</strong></li>
 </ol>
 
-<h4>5b: Parse PDFs into Source Table</h4>
-<pre><code>@setup/05_pdf_contracts/02_create_source_table.sql</code></pre>
+<p>Then continue:</p>
+<pre><code>@setup/03_data_generation/05_insert_contracts.sql
+@setup/03_data_generation/06_insert_subscriptions.sql
+@setup/03_data_generation/07_insert_opportunities.sql
+@setup/03_data_generation/08_insert_sales_teams.sql</code></pre>
 
-<h4>5c: Create Enriched Content Table</h4>
-<pre><code>@setup/05_pdf_contracts/03_create_content_table.sql</code></pre>
-
-<h4>5d: Create Cortex Search Service</h4>
-<pre><code>@setup/05_pdf_contracts/04_create_search_service.sql</code></pre>
+<h3>Step 5: PDF Contracts Pipeline</h3>
+<p>Create enriched content and search service:</p>
+<pre><code>@setup/05_pdf_contracts/01_create_content_table.sql
+@setup/05_pdf_contracts/02_create_search_service.sql</code></pre>
 
 <h3>Step 6: Final Schema (Dynamic Tables)</h3>
-<pre><code>@setup/06_final_schema/01_create_final_schema.sql
-@setup/06_final_schema/02_create_account_daily_dt.sql
-@setup/06_final_schema/03_create_subscription_daily_dt.sql
-@setup/06_final_schema/04_create_opportunity_daily_dt.sql</code></pre>
+<pre><code>@setup/06_final_schema/01_create_account_daily_dt.sql
+@setup/06_final_schema/02_create_subscription_daily_dt.sql
+@setup/06_final_schema/03_create_opportunity_daily_dt.sql</code></pre>
 
-<h3>Step 7: Semantic View &amp; Cortex Analyst</h3>
+<h3>Step 7: Semantic View</h3>
+<p>Create the semantic view for Cortex Analyst:</p>
 
-<p>Create the semantic view and configure Cortex Analyst to enable natural language queries.</p>
-
-<h4>7a: Create Semantic View</h4>
+<h4>Option A: SQL Syntax</h4>
 <pre><code>@setup/07_semantic_view/01_create_semantic_view.sql</code></pre>
 
-<h4>7b: Create Cortex Analyst in Snowsight</h4>
-<ol>
-    <li>Navigate to <strong>AI &amp; ML → Cortex Analyst</strong></li>
-    <li>Click <strong>+ Analyst</strong></li>
-    <li>Configure:
-        <ul>
-            <li><strong>Name</strong>: <code>Customer 360 Analyst</code></li>
-            <li><strong>Semantic View</strong>: Select <code>PROD.FINAL.CUSTOMER_360_SEMANTIC_VIEW</code></li>
-        </ul>
-    </li>
-    <li>Click <strong>Create</strong></li>
-    <li>Test with a sample question like "Show me accounts at risk of churning"</li>
-</ol>
+<h4>Option B: YAML Syntax</h4>
+<pre><code>@setup/07_semantic_view/02_create_semantic_view_yaml.sql</code></pre>
 
 <h3>Step 8: Cortex Agent (with Web Search)</h3>
-
-<p>Create the Cortex Agent for Snowflake Intelligence with access to all data sources including web search.</p>
 
 <h4>8a: Enable Web Search (Account Level)</h4>
 <p>Web search must be enabled at the account level BEFORE creating the agent:</p>
@@ -325,46 +303,16 @@
 <h4>8c: Create Agent</h4>
 <pre><code>@setup/08_agent/03_create_agent.sql</code></pre>
 
-<h4>Alternative: Via Snowsight UI</h4>
-<ol>
-    <li>Navigate to <strong>AI &amp; ML → Snowflake Intelligence → Agents</strong></li>
-    <li>Click <strong>+ Agent</strong></li>
-    <li>Configure basic settings:
-        <ul>
-            <li><strong>Name</strong>: <code>CUSTOMER_360_AGENT</code></li>
-            <li><strong>Database</strong>: <code>SNOWFLAKE_INTELLIGENCE</code></li>
-            <li><strong>Schema</strong>: <code>AGENTS</code></li>
-            <li><strong>Model</strong>: <code>claude-3-5-sonnet</code></li>
-        </ul>
-    </li>
-    <li>Add tools:
-        <table>
-            <tr><th>Tool</th><th>Type</th><th>Configuration</th></tr>
-            <tr>
-                <td>Cortex Analyst</td>
-                <td>cortex_analyst_text_to_sql</td>
-                <td>Semantic View: <code>PROD.FINAL.CUSTOMER_360_SEMANTIC_VIEW</code></td>
-            </tr>
-            <tr>
-                <td>Contract Search</td>
-                <td>cortex_search</td>
-                <td>Service: <code>PROD.FINAL.CONTRACT_SEARCH</code>, Max Results: 10</td>
-            </tr>
-            <tr>
-                <td>Transcript Search</td>
-                <td>cortex_search</td>
-                <td>Service: <code>PROD.FINAL.TRANSCRIPT_SEARCH</code>, Max Results: 10</td>
-            </tr>
-            <tr>
-                <td>Web Search</td>
-                <td>web_search</td>
-                <td>Name: <code>company_research</code></td>
-            </tr>
-        </table>
-    </li>
-    <li>Add system prompt (see <code>02_create_agent.sql</code> for full prompt)</li>
-    <li>Click <strong>Create</strong></li>
-</ol>
+<p>The agent includes:</p>
+<ul>
+    <li><strong>Analyst</strong>: Cortex Analyst with semantic view for structured data queries</li>
+    <li><strong>ContractSearch</strong>: Cortex Search over contract documents</li>
+    <li><strong>WebSearch</strong>: Web search for public company information</li>
+</ul>
+
+<div class="note">
+<strong>Note:</strong> TranscriptSearch is added later in Step 10 after creating the Gong analysis pipeline.
+</div>
 
 <div class="success">
 <strong>Verify in Snowflake Intelligence:</strong>
@@ -386,13 +334,11 @@
 
 <h3>Folder Structure</h3>
 <pre><code>setup/10_gong_analysis/
-├── 01_create_stage.sql           # Create stage for transcripts
-├── 02_create_source_table.sql    # Parse transcripts into table
-├── 03_create_search_service.sql  # Cortex Search on transcripts
-├── 04_create_sentiment_table.sql # Extract sentiment metadata
-├── 05_create_sentiment_summary.sql # Account-level sentiment
-├── 06_create_health_score.sql    # Composite health score view
-└── README.md                     # Detailed guide</code></pre>
+├── 01_create_stage.sql              # Create stage for transcripts
+├── 02_create_source_table.sql       # Parse transcripts into table
+├── 03_create_search_service.sql     # Cortex Search on transcripts
+├── 04_create_sentiment_analysis.sql # Sentiment extraction + health score
+├── 05_grant_permissions.sql         # Grant access to Gong objects</code></pre>
 
 <h3>Step 10a: Create Transcript Stage</h3>
 <pre><code>@setup/10_gong_analysis/01_create_stage.sql</code></pre>
@@ -405,21 +351,78 @@
     <li>Click <strong>Upload</strong></li>
 </ol>
 
-<h3>Step 10b-f: Create Tables and Views</h3>
-<pre><code>@setup/10_gong_analysis/02_create_source_table.sql
-@setup/10_gong_analysis/03_create_search_service.sql
-@setup/10_gong_analysis/04_create_sentiment_table.sql
-@setup/10_gong_analysis/05_create_sentiment_summary.sql
-@setup/10_gong_analysis/06_create_health_score.sql</code></pre>
+<h3>Step 10b: Create Source Table</h3>
+<pre><code>@setup/10_gong_analysis/02_create_source_table.sql</code></pre>
 
-<h3>Step 10g: Add to Semantic View</h3>
-<p>Add the <code>ACCOUNT_HEALTH_SCORE</code> table to your semantic view YAML (see <code>README.md</code> in <code>10_gong_analysis/</code> for full YAML snippet).</p>
+<h3>Step 10c: Create Search Service</h3>
+<pre><code>@setup/10_gong_analysis/03_create_search_service.sql</code></pre>
+
+<h3>Step 10d: Create Sentiment Analysis &amp; Health Score</h3>
+<pre><code>@setup/10_gong_analysis/04_create_sentiment_analysis.sql</code></pre>
+<p>This creates:</p>
+<ul>
+    <li><code>PROD.RAW.GONG_CALL_SENTIMENT</code> - Per-call sentiment</li>
+    <li><code>PROD.FINAL.ACCOUNT_CALL_SENTIMENT</code> - Account-level sentiment summary</li>
+    <li><code>PROD.FINAL.ACCOUNT_HEALTH_SCORE</code> - Composite health score view</li>
+</ul>
+
+<h3>Step 10e: Grant Permissions</h3>
+<pre><code>@setup/10_gong_analysis/05_grant_permissions.sql</code></pre>
+
+<h3>Step 10f: Add TranscriptSearch to Agent (UI)</h3>
+<p>After creating the Transcript Search service, add it to the agent:</p>
+<ol>
+    <li>Navigate to <strong>AI &amp; ML → Snowflake Intelligence</strong></li>
+    <li>Find <code>CUSTOMER_360_AGENT</code> and click the <strong>three-dot menu</strong> (⋮)</li>
+    <li>Select <strong>Edit</strong></li>
+    <li>Scroll down to the <strong>Tools</strong> section</li>
+    <li>Click <strong>+ Add Tool</strong></li>
+    <li>Select <strong>Cortex Search</strong> from the tool type dropdown</li>
+    <li>Configure the tool:
+        <ul>
+            <li><strong>Tool Name</strong>: <code>TranscriptSearch</code></li>
+            <li><strong>Cortex Search Service</strong>: Click the dropdown and select <code>PROD.FINAL.TRANSCRIPT_SEARCH</code></li>
+            <li><strong>Tool Description</strong>: <code>Search Gong call transcripts for customer conversations, insights about fiscal planning, layoffs, tech changes, expansion opportunities, or competitive intelligence.</code></li>
+            <li><strong>Max Results</strong>: <code>10</code></li>
+        </ul>
+    </li>
+    <li>Click <strong>Save</strong> to update the agent</li>
+</ol>
+
+<h3>Step 10g: Update Semantic View with Health Score (UI)</h3>
+<p>The new <code>ACCOUNT_HEALTH_SCORE</code> view provides a composite health score based on Gong sentiment analysis. Update the semantic view to use this instead of the basic health score:</p>
+<ol>
+    <li>Navigate to <strong>AI &amp; ML → Cortex Analyst</strong></li>
+    <li>Find <code>CUSTOMER_360_SEMANTIC_VIEW</code> and click to edit</li>
+    <li><strong>Add the Health Score table</strong>:
+        <ul>
+            <li>Click <strong>+ Add Table</strong></li>
+            <li>Select <code>PROD.FINAL.ACCOUNT_HEALTH_SCORE</code></li>
+            <li>Set <strong>Unique Key</strong>: <code>ACCOUNT_NAME</code></li>
+            <li>Add synonyms: <code>health</code>, <code>sentiment</code></li>
+        </ul>
+    </li>
+    <li><strong>Add relationship</strong>:
+        <ul>
+            <li>Create relationship from <code>ACCOUNT_HEALTH_SCORE.ACCOUNT_NAME</code> to <code>ACCOUNT_DAILY.ACCOUNT_NAME</code></li>
+        </ul>
+    </li>
+    <li><strong>Remove old health dimension</strong>:
+        <ul>
+            <li>Find and remove the <code>HEALTHSCORE</code> dimension from the accounts table (this was the basic health score from SFDC_ACCOUNT)</li>
+        </ul>
+    </li>
+    <li><strong>Update metrics</strong>:
+        <ul>
+            <li>Update <code>at_risk_accounts</code> metric to use <code>HEALTH_CATEGORY IN ('At Risk', 'Critical')</code> from health_scores table</li>
+        </ul>
+    </li>
+    <li>Click <strong>Save</strong> to update the semantic view</li>
+</ol>
 
 <hr>
 
 <h2 id="part3">Part 3: Postgres Activity Logs Pipeline (Step 11)</h2>
-
-<p>Stream real-time Okta activity logs from Snowflake Postgres to Snowflake tables via Openflow CDC.</p>
 
 <p>Stream real-time Okta activity logs from Snowflake Postgres to Snowflake tables via Openflow CDC.</p>
 
@@ -430,8 +433,7 @@
 ├── 03_enable_replication.sql      # Enable CDC replication
 ├── 04_configure_external_access.sql # External access for Openflow
 ├── 05_verification_queries.sql    # Verification and analytics queries
-├── generate_activity_data.sql     # Sample data generation
-└── README.md                      # Detailed guide</code></pre>
+├── generate_activity_data.sql     # Sample data generation</code></pre>
 
 <h3>Step 11a: Create Network Rule</h3>
 <pre><code>@setup/11_postgres_activity_logs/01_create_network_rule.sql</code></pre>
@@ -512,14 +514,14 @@
 
 <h2 id="questions">Sample Questions</h2>
 
-<h3>Account Health & Expansion</h3>
+<h3>Account Health &amp; Expansion</h3>
 <ul>
     <li>"Which accounts are at risk of churning?"</li>
     <li>"What products has Microsoft added or churned over time?"</li>
     <li>"Show me accounts with Critical health score and upcoming renewals"</li>
 </ul>
 
-<h3>Pricing & Discounts</h3>
+<h3>Pricing &amp; Discounts</h3>
 <ul>
     <li>"Which accounts have discounts above the 15% target?"</li>
     <li>"What is the optimal discount for a customer like Apple?"</li>
@@ -549,7 +551,7 @@
     <li>"Find 10K filing information for JPMorgan Chase"</li>
 </ul>
 
-<h3>Activity & Usage Analytics</h3>
+<h3>Activity &amp; Usage Analytics</h3>
 <ul>
     <li>"What is the license assignment rate for SSO across accounts?"</li>
     <li>"Which accounts have the highest MFA adoption rates?"</li>
@@ -644,7 +646,6 @@ SELECT * FROM Okta_PGCDC_DB.public.USERS;</code></pre>
 <ol>
     <li><strong>Snowflake Postgres</strong>: Delete via UI (Data → Databases → your Postgres instance → Delete)</li>
     <li><strong>Openflow Runtime</strong>: Stop and delete connectors/runtime via UI</li>
-    <li><strong>Cortex Analyst</strong>: Delete via UI (AI &amp; ML → Cortex Analyst)</li>
 </ol>
 </div>
 
@@ -654,6 +655,7 @@ SELECT * FROM Okta_PGCDC_DB.public.USERS;</code></pre>
 <ul>
     <li><a href="https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-agents">Snowflake Cortex Agents</a></li>
     <li><a href="https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-search/cortex-search-overview">Cortex Search</a></li>
+    <li><a href="https://docs.snowflake.com/en/user-guide/views-semantic/overview">Semantic Views</a></li>
     <li><a href="https://docs.snowflake.com/en/user-guide/snowflake-postgres/about">Snowflake Postgres</a></li>
     <li><a href="https://docs.snowflake.com/en/user-guide/data-load-openflow">Openflow CDC</a></li>
 </ul>
