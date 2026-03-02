@@ -2,6 +2,9 @@
 -- Step 3e: Generate Subscriptions (2-6 per Contract)
 -- ============================================================
 
+USE ROLE SYSADMIN;
+USE WAREHOUSE DEFAULT_WH;
+
 INSERT INTO PROD.RAW.SFDC_SUBSCRIPTION_CPQ
 WITH contract_products AS (
     SELECT 

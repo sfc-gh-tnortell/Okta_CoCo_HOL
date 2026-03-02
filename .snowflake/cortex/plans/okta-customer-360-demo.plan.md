@@ -174,7 +174,7 @@ Key fields:
 CREATE CORTEX SEARCH SERVICE PROD.FINAL.CONTRACT_SEARCH
   ON content
   ATTRIBUTES account_name, contract_id, product_list, total_value
-  WAREHOUSE = COMPUTE_WH
+  WAREHOUSE = DEFAULT_WH
   TARGET_LAG = '1 hour'
   AS (
     SELECT 
@@ -271,6 +271,6 @@ Create stored procedure for searching publicly available company information:
 ## Dependencies
 
 - Snowflake account with Cortex features enabled
-- COMPUTE_WH warehouse
+- DEFAULT_WH warehouse
 - Python for PDF generation (reportlab or fpdf library)
 - Appropriate roles and privileges

@@ -191,7 +191,7 @@
 <pre><code><span class="sql-keyword">CREATE OR REPLACE</span> <span class="sql-keyword">CORTEX SEARCH SERVICE</span> PROD.RAW.GONG_SEARCH_SERVICE
     <span class="sql-keyword">ON</span> CONTENT
     <span class="sql-keyword">ATTRIBUTES</span> FILE_NAME, ACCOUNT_NAME, CALL_DATE
-    <span class="sql-keyword">WAREHOUSE</span> = COMPUTE_WH
+    <span class="sql-keyword">WAREHOUSE</span> = DEFAULT_WH
     <span class="sql-keyword">TARGET_LAG</span> = <span class="sql-string">'1 hour'</span>
     <span class="sql-keyword">AS</span> (
         <span class="sql-keyword">SELECT</span> 
@@ -241,7 +241,7 @@
 
 <hr>
 
-<h2>Step 5: Create Account-Level Sentiment Summary</h2>
+<h2>Step 4: Create Account-Level Sentiment Summary</h2>
 <div class="step-box">
 <pre><code><span class="sql-keyword">CREATE OR REPLACE TABLE</span> PROD.FINAL.ACCOUNT_CALL_SENTIMENT <span class="sql-keyword">AS</span>
 <span class="sql-keyword">SELECT</span>
@@ -260,7 +260,7 @@
 
 <hr>
 
-<h2>Step 6: Create Composite Health Score</h2>
+<h2>Step 5: Create Composite Health Score</h2>
 <div class="step-box">
 <pre><code><span class="sql-keyword">CREATE OR REPLACE VIEW</span> PROD.FINAL.ACCOUNT_HEALTH_SCORE <span class="sql-keyword">AS</span>
 <span class="sql-keyword">WITH</span> account_products <span class="sql-keyword">AS</span> (
@@ -334,7 +334,7 @@ industry_benchmark <span class="sql-keyword">AS</span> (
 
 <hr>
 
-<h2>Step 7: Add Health Score to Semantic View for Cortex Analyst</h2>
+<h2>Step 6: Add Health Score to Semantic View for Cortex Analyst</h2>
 <p>Update the semantic view used by the Customer 360 Agent to include the new health score data.</p>
 
 <h3>7a: Add the ACCOUNT_HEALTH_SCORE table to your semantic view YAML</h3>

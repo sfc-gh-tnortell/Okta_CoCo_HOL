@@ -4,6 +4,9 @@
 -- Creates opportunities including failed expansion attempts for products
 -- that were proposed but declined by the customer
 
+USE ROLE SYSADMIN;
+USE WAREHOUSE DEFAULT_WH;
+
 INSERT INTO PROD.RAW.SFDC_OPPORTUNITY
 WITH existing_subscriptions AS (
     -- Get products each account already has

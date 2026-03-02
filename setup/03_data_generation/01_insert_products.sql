@@ -2,6 +2,9 @@
 -- Step 3a: Insert Okta-Style Identity Products
 -- ============================================================
 
+USE ROLE SYSADMIN;
+USE WAREHOUSE DEFAULT_WH;
+
 INSERT INTO PROD.RAW.SFDC_PRODUCT (
     PRODUCT_ID, PRODUCT_NAME, PRODUCT_CODE, PRODUCT_DESCRIPTION, 
     PRODUCT_FAMILY, PRODUCT_LINE, PRODUCT_CATEGORY, PRODUCT_UNIT, 

@@ -3,6 +3,9 @@
 -- ============================================================
 -- Extracts sentiment from transcripts and creates composite health score
 
+USE ROLE SYSADMIN;
+USE WAREHOUSE DEFAULT_WH;
+
 -- Step 4a: Create Sentiment Table (Metadata Only)
 -- Extracts sentiment from source table, storing only metadata (no content duplication)
 CREATE OR REPLACE TABLE PROD.RAW.GONG_CALL_SENTIMENT AS

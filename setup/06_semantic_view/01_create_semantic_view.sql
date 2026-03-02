@@ -7,6 +7,9 @@
 --   Option A: SQL syntax (CREATE SEMANTIC VIEW)
 --   Option B: YAML syntax (SYSTEM$CREATE_SEMANTIC_VIEW_FROM_YAML)
 
+USE ROLE SYSADMIN;
+USE WAREHOUSE DEFAULT_WH;
+
 -- ============================================================
 -- OPTION A: SQL Syntax
 -- ============================================================

@@ -4,6 +4,9 @@
 -- This is an alternative to Option A (SQL syntax)
 -- Uses SYSTEM$CREATE_SEMANTIC_VIEW_FROM_YAML stored procedure
 
+USE ROLE SYSADMIN;
+USE WAREHOUSE DEFAULT_WH;
+
 CALL SYSTEM$CREATE_SEMANTIC_VIEW_FROM_YAML(
   'PROD.FINAL',
   $$

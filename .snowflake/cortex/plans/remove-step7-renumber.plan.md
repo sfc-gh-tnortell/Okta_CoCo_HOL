@@ -10,7 +10,7 @@ setup/
 ├── 08_data_masking/       → becomes 07_data_masking
 ├── 09_object_tagging/     → becomes 08_object_tagging
 ├── 10_test_governance/    → becomes 09_test_governance
-├── 11_gong_analysis/      → becomes 10_gong_analysis
+├── 11_gong_analysis/      → becomes 09_gong_analysis
 ├── 12_web_search/         → becomes 11_web_search
 ├── 13_postgres_activity_logs/ → becomes 12_postgres_activity_logs
 ```
@@ -38,12 +38,12 @@ setup/
 ├── 02_raw_tables/
 ├── 03_sfdc_data/
 ├── 04_refined_data/
-├── 05_pdf_contracts/
+├── 04_pdf_contracts/
 ├── 06_dynamic_tables/
 ├── 07_data_masking/
 ├── 08_object_tagging/
 ├── 09_test_governance/
-├── 10_gong_analysis/
+├── 09_gong_analysis/
 ├── 11_web_search/
 ├── 12_postgres_activity_logs/
 ```

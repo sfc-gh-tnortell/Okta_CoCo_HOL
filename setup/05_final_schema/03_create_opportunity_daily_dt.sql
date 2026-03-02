@@ -3,9 +3,12 @@
 -- ============================================================
 -- Transforms opportunity data with account and product enrichment
 
+USE ROLE SYSADMIN;
+USE WAREHOUSE DEFAULT_WH;
+
 CREATE OR REPLACE DYNAMIC TABLE PROD.FINAL.OPPORTUNITY_DAILY
     TARGET_LAG = '1 day'
-    WAREHOUSE = COMPUTE_WH
+    WAREHOUSE = DEFAULT_WH
 AS
 SELECT 
     o.OPPORTUNITY_ID,

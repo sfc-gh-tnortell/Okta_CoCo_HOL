@@ -77,7 +77,7 @@ CREATE OR REPLACE EXTERNAL ACCESS INTEGRATION okta_pgcdc_access
 GRANT USAGE ON INTEGRATION okta_pgcdc_access TO ROLE Postgres_HOL_ROLE;
 ```
 
-## Step 5: Openflow Configuration
+## Step 4: Openflow Configuration
 
 ### Runtime Configuration
 - **Runtime Role**: Use `Postgres_HOL_ROLE` (created in Step 4)

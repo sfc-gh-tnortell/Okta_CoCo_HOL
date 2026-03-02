@@ -3,7 +3,7 @@
 -- ============================================================
 
 USE ROLE SYSADMIN;
-USE WAREHOUSE COMPUTE_WH;
+USE WAREHOUSE DEFAULT_WH;
 USE DATABASE PROD;
 USE SCHEMA RAW;
 

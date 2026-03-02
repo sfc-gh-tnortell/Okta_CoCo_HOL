@@ -3,9 +3,12 @@
 -- ============================================================
 -- Transforms raw subscription data with product enrichment
 
+USE ROLE SYSADMIN;
+USE WAREHOUSE DEFAULT_WH;
+
 CREATE OR REPLACE DYNAMIC TABLE PROD.FINAL.SUBSCRIPTION_DAILY
     TARGET_LAG = '1 day'
-    WAREHOUSE = COMPUTE_WH
+    WAREHOUSE = DEFAULT_WH
 AS
 SELECT 
     s.SUBSCRIPTION_ID,

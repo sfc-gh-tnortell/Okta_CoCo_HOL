@@ -4,7 +4,7 @@
 -- Enrich parsed PDF content with metadata from CRM tables
 
 USE ROLE SYSADMIN;
-USE WAREHOUSE COMPUTE_WH;
+USE WAREHOUSE DEFAULT_WH;
 USE DATABASE PROD;
 
 -- Create enriched content table joining PDF content with CRM data

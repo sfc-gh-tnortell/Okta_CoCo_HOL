@@ -1,6 +1,9 @@
 -- Step 2: Create Source Table for Cortex Search
 -- Cortex Search requires a regular table (not a directory table)
 
+USE ROLE SYSADMIN;
+USE WAREHOUSE DEFAULT_WH;
+
 -- Step 2a: Create file format for text files
 CREATE OR REPLACE FILE FORMAT PROD.RAW.TEXT_FORMAT
     TYPE = 'CSV'

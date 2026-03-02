@@ -4,9 +4,12 @@
 -- Transforms raw account data with sales team enrichment
 -- Each account is assigned to exactly ONE sales team (1:1 relationship)
 
+USE ROLE SYSADMIN;
+USE WAREHOUSE DEFAULT_WH;
+
 CREATE OR REPLACE DYNAMIC TABLE PROD.FINAL.ACCOUNT_DAILY
     TARGET_LAG = '1 day'
-    WAREHOUSE = COMPUTE_WH
+    WAREHOUSE = DEFAULT_WH
 AS
 WITH ranked_teams AS (
     -- Assign a row number to each team within their territory

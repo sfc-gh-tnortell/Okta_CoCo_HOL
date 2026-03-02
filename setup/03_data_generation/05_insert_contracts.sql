@@ -4,7 +4,7 @@
 -- Parse PDF contracts and extract structured data into SFDC_CONTRACT table
 
 USE ROLE SYSADMIN;
-USE WAREHOUSE COMPUTE_WH;
+USE WAREHOUSE DEFAULT_WH;
 USE DATABASE PROD;
 USE SCHEMA RAW;
 

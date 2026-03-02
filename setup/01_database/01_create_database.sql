@@ -2,6 +2,9 @@
 -- Step 1: Create Database and Schemas
 -- ============================================================
 
+USE ROLE ACCOUNTADMIN;
+GRANT ALL ON WAREHOUSE DEFAULT_WH TO ROLE SYSADMIN;
+
 USE ROLE SYSADMIN;
 
 CREATE DATABASE IF NOT EXISTS PROD;

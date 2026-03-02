@@ -3,6 +3,9 @@
 -- ============================================================
 -- Run only if timezone distribution is uneven
 
+USE ROLE SYSADMIN;
+USE WAREHOUSE DEFAULT_WH;
+
 UPDATE PROD.RAW.SFDC_ACCOUNT
 SET TIMEZONE = CASE MOD(ABS(HASH(ACCOUNT_ID)), 4)
     WHEN 0 THEN 'Pacific'

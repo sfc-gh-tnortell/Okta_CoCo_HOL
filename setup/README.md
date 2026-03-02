@@ -17,7 +17,7 @@ This guide will help you recreate the Customer 360 demo environment for Snowflak
 
 - Snowflake account with Cortex features enabled
 - SYSADMIN or equivalent role
-- COMPUTE_WH warehouse (or modify scripts to use your warehouse)
+- DEFAULT_WH warehouse (or modify scripts to use your warehouse)
 - Python 3.x with packages (for PDF/transcript generation):
   ```bash
   pip install snowflake-connector-python reportlab
@@ -31,8 +31,8 @@ setup/
 ├── 02_raw_tables/        # Create source tables (SFDC_* + GONG)
 ├── 03_data_generation/   # Generate synthetic data
 ├── 04_sales_teams/       # Create sales team mappings
-├── 05_pdf_contracts/     # Generate PDFs and transcripts (Python)
-├── 06_final_schema/      # Create dynamic tables
+├── 04_pdf_contracts/     # Generate PDFs and transcripts (Python)
+├── 05_final_schema/      # Create dynamic tables
 ├── 07_cortex_search/     # Set up Cortex Search services
 ├── 08_semantic_view/     # Create semantic view for Cortex Analyst
 ├── 09_agent/             # Create Cortex Agent
@@ -74,9 +74,9 @@ setup/
 @04_sales_teams/02_insert_sales_teams.sql
 ```
 
-### Step 5: Generate PDFs and Transcripts (Python)
+### Step 4: Generate PDFs and Transcripts (Python)
 ```bash
-cd setup/05_pdf_contracts
+cd setup/04_pdf_contracts
 
 # Set your Snowflake connection
 export SNOWFLAKE_CONNECTION_NAME=your_connection_name
@@ -88,15 +88,15 @@ python generate_contracts.py
 python generate_transcripts.py
 ```
 
-### Step 6: Final Schema (Dynamic Tables)
+### Step 4: Final Schema (Dynamic Tables)
 ```sql
-@06_final_schema/01_create_final_schema.sql
-@06_final_schema/02_create_account_daily_dt.sql
-@06_final_schema/03_create_subscription_daily_dt.sql
-@06_final_schema/04_create_opportunity_daily_dt.sql
+@05_final_schema/01_create_final_schema.sql
+@05_final_schema/02_create_account_daily_dt.sql
+@05_final_schema/03_create_subscription_daily_dt.sql
+@05_final_schema/04_create_opportunity_daily_dt.sql
 ```
 
-### Step 7: Cortex Search Services
+### Step 6: Cortex Search Services
 ```sql
 @07_cortex_search/01_create_contract_content.sql
 @07_cortex_search/02_create_transcript_content.sql
@@ -104,18 +104,18 @@ python generate_transcripts.py
 @07_cortex_search/04_create_transcript_search.sql
 ```
 
-### Step 8: Semantic View
+### Step 7: Semantic View
 ```sql
 @08_semantic_view/01_create_semantic_view.sql
 ```
 
-### Step 9: Cortex Agent
+### Step 8: Cortex Agent
 ```sql
 @09_agent/01_create_agent_schema.sql
 @09_agent/02_create_agent.sql
 ```
 
-### Step 10: Permissions
+### Step 8: Permissions
 ```sql
 @10_grants/01_grant_permissions.sql
 ```
@@ -183,7 +183,7 @@ After running all scripts:
 
 ## Customization
 
-- **Warehouse**: Modify `COMPUTE_WH` in scripts for different warehouse
+- **Warehouse**: Modify `DEFAULT_WH` in scripts for different warehouse
 - **Account Count**: Adjust in `02_insert_accounts.sql`
 - **Product Pricing**: Update in `01_insert_products.sql`
 - **Transcript Percentage**: Change `MOD(ABS(HASH(ACCOUNT_ID)), 4) = 0` to adjust coverage
@@ -194,7 +194,7 @@ After running all scripts:
 The demo uses text-based contract content instead of parsing PDFs. The CONTRACT_CONTENT table stores searchable text representation.
 
 ### Dynamic tables not refreshing
-Check that COMPUTE_WH is running and has sufficient credits. Use:
+Check that DEFAULT_WH is running and has sufficient credits. Use:
 ```sql
 ALTER DYNAMIC TABLE PROD.FINAL.ACCOUNT_DAILY REFRESH;
 ```

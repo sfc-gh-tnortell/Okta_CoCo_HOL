@@ -358,7 +358,7 @@ GRANT USAGE ON INTEGRATION okta_pgcdc_access TO ROLE Postgres_HOL_ROLE;
 
 ---
 
-## Step 5: Configure Openflow CDC Pipeline
+## Step 4: Configure Openflow CDC Pipeline
 
 ### Prerequisites
 
@@ -479,7 +479,7 @@ SELECT 'DEVICE_AUTH_LOGS', COUNT(*) FROM "device_auth_logs";
 
 ---
 
-## Step 6: Streaming Data Simulator (Optional)
+## Step 5: Streaming Data Simulator (Optional)
 
 Create a Postgres procedure to simulate continuous auth log generation for real-time CDC testing.
 

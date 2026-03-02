@@ -71,7 +71,7 @@ Create the search service on the source table:
 CREATE OR REPLACE CORTEX SEARCH SERVICE PROD.RAW.GONG_SEARCH_SERVICE
     ON CONTENT
     ATTRIBUTES FILE_NAME, ACCOUNT_NAME, CALL_DATE
-    WAREHOUSE = COMPUTE_WH
+    WAREHOUSE = DEFAULT_WH
     TARGET_LAG = '1 hour'
     AS (
         SELECT 
@@ -122,7 +122,7 @@ FROM PROD.RAW.GONG_TRANSCRIPT_SOURCE;
 
 ---
 
-## Step 5: Create Account-Level Sentiment Summary
+## Step 4: Create Account-Level Sentiment Summary
 
 ```sql
 CREATE OR REPLACE TABLE PROD.FINAL.ACCOUNT_CALL_SENTIMENT AS
@@ -142,7 +142,7 @@ GROUP BY ACCOUNT_NAME;
 
 ---
 
-## Step 6: Create Composite Health Score
+## Step 5: Create Composite Health Score
 
 ```sql
 CREATE OR REPLACE VIEW PROD.FINAL.ACCOUNT_HEALTH_SCORE AS
@@ -217,7 +217,7 @@ LEFT JOIN industry_benchmark ib ON a.INDUSTRY = ib.INDUSTRY;
 
 ---
 
-## Step 7: Add Health Score to Semantic View for Cortex Analyst
+## Step 6: Add Health Score to Semantic View for Cortex Analyst
 
 Update the semantic view used by the Customer 360 Agent to include the new health score data.
 

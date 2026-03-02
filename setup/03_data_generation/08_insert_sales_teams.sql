@@ -2,6 +2,9 @@
 -- Step 3h: Insert Sales Team Data
 -- ============================================================
 
+USE ROLE SYSADMIN;
+USE WAREHOUSE DEFAULT_WH;
+
 INSERT INTO PROD.RAW.SALES_TEAM (TEAM_ID, TERRITORY, TIMEZONE, REGION, ACCOUNT_EXECUTIVE, SALES_ENGINEER, SDR)
 VALUES
     ('TEAM001', 'West', 'Pacific', 'Americas West', 'Jennifer Martinez', 'Kevin Chen', 'Ashley Taylor'),

@@ -3,6 +3,9 @@
 -- ============================================================
 -- Agent for Snowflake Intelligence with all data sources
 
+USE ROLE SYSADMIN;
+USE WAREHOUSE DEFAULT_WH;
+
 CREATE OR REPLACE AGENT SNOWFLAKE_INTELLIGENCE.AGENTS.CUSTOMER_360_AGENT
 COMMENT = 'Customer 360 Agent for identity management SaaS sales team. Answers questions about accounts, contracts, subscriptions, opportunities, and call transcripts.'
 PROFILE = '{"display_name": "Customer 360 Assistant", "color": "blue"}'

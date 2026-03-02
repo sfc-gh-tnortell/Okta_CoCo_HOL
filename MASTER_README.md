@@ -8,10 +8,10 @@ This comprehensive guide covers the full setup of the Okta Customer 360 demo env
 
 1. [Overview](#overview)
 2. [Prerequisites](#prerequisites)
-3. [Part 1: Core Setup (Steps 1-9)](#part-1-core-setup-steps-1-9)
-4. [Part 2: Gong Transcript Analysis (Step 10)](#part-2-gong-transcript-analysis-step-10)
-5. [Part 3: Postgres Activity Logs Pipeline (Step 11)](#part-3-postgres-activity-logs-pipeline-step-11)
-6. [Step 12: Choose Your Own Adventure](#step-12-choose-your-own-adventure-)
+3. [Part 1: Core Setup (Steps 1-8)](#part-1-core-setup-steps-1-8)
+4. [Part 2: Gong Transcript Analysis (Step 9)](#part-2-gong-transcript-analysis-step-9)
+5. [Part 3: Postgres Activity Logs Pipeline (Step 10)](#part-3-postgres-activity-logs-pipeline-step-10)
+6. [Part 4: Choose Your Own Adventure](#part-4-choose-your-own-adventure-)
 7. [Sample Questions](#sample-questions)
 8. [Data Summary](#data-summary)
 9. [Troubleshooting](#troubleshooting)
@@ -80,16 +80,16 @@ This comprehensive guide covers the full setup of the Okta Customer 360 demo env
 
 - Snowflake account with Cortex features enabled
 - ACCOUNTADMIN or SYSADMIN role
-- COMPUTE_WH warehouse (or modify scripts to use your warehouse)
+- DEFAULT_WH warehouse (or modify scripts to use your warehouse)
 - Python 3.x with packages (for PDF/transcript generation):
   ```bash
   pip install snowflake-connector-python reportlab
   ```
-- For Step 11: Existing Openflow deployment
+- For Step 10: Existing Openflow deployment
 
 ---
 
-## Part 1: Core Setup (Steps 1-9)
+## Part 1: Core Setup (Steps 1-8)
 
 ### Folder Structure
 
@@ -98,11 +98,11 @@ setup/
 ├── 01_database/          # Create database and schemas
 ├── 02_raw_tables/        # Create source tables (SFDC_*, SALES_TEAM)
 ├── 03_data_generation/   # Generate synthetic data + parse contracts
-├── 05_pdf_contracts/     # Create enriched content + search service
-├── 06_final_schema/      # Create dynamic tables
-├── 07_semantic_view/     # Create semantic view for Cortex Analyst
-├── 08_agent/             # Create Cortex Agent
-├── 09_grants/            # Grant permissions
+├── 04_pdf_contracts/     # Create enriched content + search service
+├── 05_final_schema/      # Create dynamic tables
+├── 06_semantic_view/     # Create semantic view for Cortex Analyst
+├── 07_agent/             # Create Cortex Agent
+├── 08_grants/            # Grant permissions
 ```
 
 ---
@@ -173,25 +173,25 @@ setup/03_data_generation/08_insert_sales_teams.sql
 
 ---
 
-### Step 5: PDF Contracts Pipeline
+### Step 4: PDF Contracts Pipeline
 
 📁 **Files**:
 ```
-setup/05_pdf_contracts/01_create_content_table.sql
-setup/05_pdf_contracts/02_create_search_service.sql
+setup/04_pdf_contracts/01_create_content_table.sql
+setup/04_pdf_contracts/02_create_search_service.sql
 ```
 
 Creates enriched contract content and Cortex Search service for semantic search over contract documents.
 
 ---
 
-### Step 6: Final Schema (Dynamic Tables)
+### Step 5: Final Schema (Dynamic Tables)
 
 📁 **Files**:
 ```
-setup/06_final_schema/01_create_account_daily_dt.sql
-setup/06_final_schema/02_create_subscription_daily_dt.sql
-setup/06_final_schema/03_create_opportunity_daily_dt.sql
+setup/05_final_schema/01_create_account_daily_dt.sql
+setup/05_final_schema/02_create_subscription_daily_dt.sql
+setup/05_final_schema/03_create_opportunity_daily_dt.sql
 ```
 
 Creates dynamic tables that automatically refresh when source data changes:
@@ -201,11 +201,11 @@ Creates dynamic tables that automatically refresh when source data changes:
 
 ---
 
-### Step 7: Semantic View
+### Step 6: Semantic View
 
-📁 **File (Option A - SQL)**: `setup/07_semantic_view/01_create_semantic_view.sql`
+📁 **File (Option A - SQL)**: `setup/06_semantic_view/01_create_semantic_view.sql`
 
-📁 **File (Option B - YAML)**: `setup/07_semantic_view/02_create_semantic_view_yaml.sql`
+📁 **File (Option B - YAML)**: `setup/06_semantic_view/02_create_semantic_view_yaml.sql`
 
 Creates the semantic view for Cortex Analyst natural language queries:
 
@@ -226,9 +226,9 @@ CREATE OR REPLACE SEMANTIC VIEW PROD.FINAL.CUSTOMER_360_SEMANTIC_VIEW
 
 ---
 
-### Step 8: Cortex Agent (with Web Search)
+### Step 7: Cortex Agent (with Web Search)
 
-#### 8a: Enable Web Search (Account Level)
+#### 7a: Enable Web Search (Account Level)
 
 Web search must be enabled at the account level **BEFORE** creating the agent:
 
@@ -238,9 +238,9 @@ Web search must be enabled at the account level **BEFORE** creating the agent:
 
 > **Note**: This is a one-time account-level setting requiring ACCOUNTADMIN.
 
-#### 8b: Create Agent Schema
+#### 7b: Create Agent Schema
 
-📁 **File**: `setup/08_agent/02_create_agent_schema.sql`
+📁 **File**: `setup/07_agent/02_create_agent_schema.sql`
 
 ```sql
 USE ROLE SYSADMIN;
@@ -248,9 +248,9 @@ CREATE DATABASE IF NOT EXISTS SNOWFLAKE_INTELLIGENCE;
 CREATE SCHEMA IF NOT EXISTS SNOWFLAKE_INTELLIGENCE.AGENTS;
 ```
 
-#### 8c: Create Agent
+#### 7c: Create Agent
 
-📁 **File**: `setup/08_agent/03_create_agent.sql`
+📁 **File**: `setup/07_agent/03_create_agent.sql`
 
 ```sql
 CREATE OR REPLACE AGENT SNOWFLAKE_INTELLIGENCE.AGENTS.CUSTOMER_360_AGENT
@@ -284,7 +284,7 @@ The agent includes:
 - **ContractSearch**: Cortex Search over contract documents
 - **WebSearch**: Web search for public company information
 
-> **Note**: TranscriptSearch is added later in Step 10 after creating the Gong analysis pipeline.
+> **Note**: TranscriptSearch is added later in Step 9 after creating the Gong analysis pipeline.
 
 **Verify in Snowflake Intelligence:**
 1. Navigate to **AI & ML → Snowflake Intelligence**
@@ -293,9 +293,9 @@ The agent includes:
 
 ---
 
-### Step 9: Permissions
+### Step 8: Permissions
 
-📁 **File**: `setup/09_grants/01_grant_permissions.sql`
+📁 **File**: `setup/08_grants/01_grant_permissions.sql`
 
 ```sql
 -- Grant access to semantic view
@@ -307,14 +307,14 @@ GRANT USAGE ON AGENT SNOWFLAKE_INTELLIGENCE.AGENTS.CUSTOMER_360_AGENT TO ROLE PU
 
 ---
 
-## Part 2: Gong Transcript Analysis (Step 10)
+## Part 2: Gong Transcript Analysis (Step 9)
 
 This step creates a semantic search service over Gong call transcripts and builds a composite account health score.
 
 ### Folder Structure
 
 ```
-setup/10_gong_analysis/
+setup/09_gong_analysis/
 ├── 01_create_stage.sql              # Create stage for transcripts
 ├── 02_create_source_table.sql       # Parse transcripts into table
 ├── 03_create_search_service.sql     # Cortex Search on transcripts
@@ -324,9 +324,9 @@ setup/10_gong_analysis/
 
 ---
 
-### Step 10a: Create Transcript Stage
+### Step 9a: Create Transcript Stage
 
-📁 **File**: `setup/10_gong_analysis/01_create_stage.sql`
+📁 **File**: `setup/09_gong_analysis/01_create_stage.sql`
 
 ```sql
 USE ROLE SYSADMIN;
@@ -356,9 +356,9 @@ SELECT * FROM DIRECTORY(@PROD.RAW.GONG_TRANSCRIPTS_STAGE) LIMIT 10;
 
 ---
 
-### Step 10b: Create Source Table
+### Step 9b: Create Source Table
 
-📁 **File**: `setup/10_gong_analysis/02_create_source_table.sql`
+📁 **File**: `setup/09_gong_analysis/02_create_source_table.sql`
 
 Parses transcript filenames to extract account name and call date:
 
@@ -385,16 +385,16 @@ FROM @PROD.RAW.GONG_TRANSCRIPTS_STAGE
 
 ---
 
-### Step 10c: Create Search Service
+### Step 9c: Create Search Service
 
-📁 **File**: `setup/10_gong_analysis/03_create_search_service.sql`
+📁 **File**: `setup/09_gong_analysis/03_create_search_service.sql`
 
 Creates a Cortex Search service for semantic search over transcript content:
 
 ```sql
 CREATE OR REPLACE CORTEX SEARCH SERVICE PROD.FINAL.TRANSCRIPT_SEARCH
 ON CONTENT
-WAREHOUSE = COMPUTE_WH
+WAREHOUSE = DEFAULT_WH
 TARGET_LAG = '1 hour'
 AS (
     SELECT 
@@ -408,9 +408,9 @@ AS (
 
 ---
 
-### Step 10d: Create Sentiment Analysis & Health Score
+### Step 9d: Create Sentiment Analysis & Health Score
 
-📁 **File**: `setup/10_gong_analysis/04_create_sentiment_analysis.sql`
+📁 **File**: `setup/09_gong_analysis/04_create_sentiment_analysis.sql`
 
 Uses `SNOWFLAKE.CORTEX.SENTIMENT` to analyze call transcripts and create a composite health score:
 
@@ -450,9 +450,9 @@ This creates:
 
 ---
 
-### Step 10e: Grant Permissions
+### Step 9e: Grant Permissions
 
-📁 **File**: `setup/10_gong_analysis/05_grant_permissions.sql`
+📁 **File**: `setup/09_gong_analysis/05_grant_permissions.sql`
 
 ```sql
 GRANT SELECT ON TABLE PROD.RAW.GONG_TRANSCRIPT_SOURCE TO ROLE PUBLIC;
@@ -464,7 +464,7 @@ GRANT USAGE ON CORTEX SEARCH SERVICE PROD.FINAL.TRANSCRIPT_SEARCH TO ROLE PUBLIC
 
 ---
 
-### Step 10f: Add TranscriptSearch to Agent (UI)
+### Step 9f: Add TranscriptSearch to Agent (UI)
 
 After creating the Transcript Search service, add it to the agent:
 
@@ -483,7 +483,7 @@ After creating the Transcript Search service, add it to the agent:
 
 ---
 
-### Step 10g: Update Semantic View with Health Score (UI)
+### Step 9g: Update Semantic View with Health Score (UI)
 
 The new `ACCOUNT_HEALTH_SCORE` view provides a composite health score based on Gong sentiment analysis. Update the semantic view to use this instead of the basic health score:
 
@@ -504,7 +504,7 @@ The new `ACCOUNT_HEALTH_SCORE` view provides a composite health score based on G
 
 ---
 
-## Part 3: Postgres Activity Logs Pipeline (Step 11)
+## Part 3: Postgres Activity Logs Pipeline (Step 10)
 
 Stream real-time Okta activity logs from Snowflake Postgres to Snowflake tables via Openflow CDC.
 
@@ -513,7 +513,7 @@ Stream real-time Okta activity logs from Snowflake Postgres to Snowflake tables 
 ### Folder Structure
 
 ```
-setup/11_postgres_activity_logs/
+setup/10_postgres_activity_logs/
 ├── 01_create_network_rule.sql        # Network rule for Postgres access
 ├── 02_create_postgres_tables.sql     # DDL for Postgres tables
 ├── 03_enable_replication.sql         # Enable CDC replication
@@ -525,9 +525,9 @@ setup/11_postgres_activity_logs/
 
 ---
 
-### Step 11a: Create Network Rule (Snowflake)
+### Step 10a: Create Network Rule (Snowflake)
 
-📁 **File**: `setup/11_postgres_activity_logs/01_create_network_rule.sql`
+📁 **File**: `setup/10_postgres_activity_logs/01_create_network_rule.sql`
 
 Snowflake Postgres requires a network rule to allow external connections:
 
@@ -553,7 +553,7 @@ SHOW NETWORK POLICIES;
 
 ---
 
-### Step 11b: Create Postgres Instance (Snowsight UI)
+### Step 10b: Create Postgres Instance (Snowsight UI)
 
 1. Navigate to **Postgres** in the left navigation menu
 2. Click **+ Instance** to create a new Postgres instance
@@ -562,16 +562,16 @@ SHOW NETWORK POLICIES;
    - **Compute Family**: BURST_S
    - **Storage**: 25 GB
    - **Postgres Version**: 18
-   - **Network Policy**: `POSTGRES_ACCESS_POLICY` (created in Step 11a)
+   - **Network Policy**: `POSTGRES_ACCESS_POLICY` (created in Step 10a)
 4. Click **Create** and save connection credentials securely
 
 **Reference**: [Snowflake Postgres Documentation](https://docs.snowflake.com/en/user-guide/snowflake-postgres/about)
 
 ---
 
-### Step 11c: Create Postgres Tables (Postgres)
+### Step 10c: Create Postgres Tables (Postgres)
 
-📁 **File**: `setup/11_postgres_activity_logs/02_create_postgres_tables.sql`
+📁 **File**: `setup/10_postgres_activity_logs/02_create_postgres_tables.sql`
 
 Connect to your Postgres instance using DBeaver, psql CLI, or another Postgres client:
 
@@ -616,9 +616,9 @@ CREATE TABLE device_auth_logs (
 
 ---
 
-### Step 11d: Enable Replication (Postgres)
+### Step 10d: Enable Replication (Postgres)
 
-📁 **File**: `setup/11_postgres_activity_logs/03_enable_replication.sql`
+📁 **File**: `setup/10_postgres_activity_logs/03_enable_replication.sql`
 
 Openflow CDC requires replication privileges. Run in your Postgres instance:
 
@@ -635,9 +635,9 @@ SELECT * FROM pg_publication;
 
 ---
 
-### Step 11e: Generate Sample Data (Postgres)
+### Step 10e: Generate Sample Data (Postgres)
 
-📁 **File**: `setup/11_postgres_activity_logs/04_generate_activity_data.sql`
+📁 **File**: `setup/10_postgres_activity_logs/04_generate_activity_data.sql`
 
 Execute in your Postgres client to populate sample users, assignments, and auth logs.
 
@@ -645,9 +645,9 @@ Execute in your Postgres client to populate sample users, assignments, and auth 
 
 ---
 
-### Step 11f: Configure External Access for Openflow (Snowflake)
+### Step 10f: Configure External Access for Openflow (Snowflake)
 
-📁 **File**: `setup/11_postgres_activity_logs/05_configure_external_access.sql`
+📁 **File**: `setup/10_postgres_activity_logs/05_configure_external_access.sql`
 
 Back in Snowflake, create the external access integration for Openflow to connect to your Postgres instance:
 
@@ -684,7 +684,7 @@ GRANT USAGE ON INTEGRATION okta_pgcdc_access TO ROLE Postgres_HOL_ROLE;
 
 ---
 
-### Step 11g: Configure Openflow CDC Pipeline
+### Step 10g: Configure Openflow CDC Pipeline
 
 #### 1. Create Runtime
 
@@ -717,7 +717,7 @@ From the Parameter contexts list, edit **PostgreSQL Source Parameters**:
 | PostgreSQL JDBC Driver | `postgresql-42.7.7.jar` | Download from [jdbc.postgresql.org](https://jdbc.postgresql.org/download/) |
 | PostgreSQL Password | `<your-password>` | Password for snowflake_admin user |
 | PostgreSQL Username | `snowflake_admin` | PostgreSQL user with REPLICATION privileges |
-| Publication Name | `openflow_publication` | The publication created in Step 11d |
+| Publication Name | `openflow_publication` | The publication created in Step 10d |
 | Replication Slot Name | *(leave empty)* | Auto-generated by Openflow |
 
 **To upload the JDBC driver:**
@@ -759,9 +759,9 @@ Edit **PostgreSQL Ingestion Parameters**:
 
 ---
 
-### Step 11h: Verify Data Flow
+### Step 10h: Verify Data Flow
 
-📁 **File**: `setup/11_postgres_activity_logs/06_verification_queries.sql`
+📁 **File**: `setup/10_postgres_activity_logs/06_verification_queries.sql`
 
 Verify data is flowing to Snowflake:
 
@@ -785,9 +785,9 @@ SELECT 'DEVICE_AUTH_LOGS', COUNT(*) FROM "device_auth_logs";
 
 ---
 
-### Step 11i: Create Streaming Procedure (Postgres)
+### Step 10i: Create Streaming Procedure (Postgres)
 
-📁 **File**: `setup/11_postgres_activity_logs/07_streaming_procedure.sql`
+📁 **File**: `setup/10_postgres_activity_logs/07_streaming_procedure.sql`
 
 Connect to your Postgres instance using DBeaver, psql CLI, or another Postgres client and run the streaming procedure script.
 
@@ -899,7 +899,7 @@ SELECT * FROM Okta_PGCDC_DB.public.USERS;
 
 ---
 
-## Step 12: Choose Your Own Adventure 🚀
+## Part 4: Choose Your Own Adventure 🚀
 
 This section provides ideas for extending the Customer 360 solution using **Cortex Code** - Snowflake's AI-powered CLI. Each adventure builds on what you've created and demonstrates additional Snowflake capabilities.
 

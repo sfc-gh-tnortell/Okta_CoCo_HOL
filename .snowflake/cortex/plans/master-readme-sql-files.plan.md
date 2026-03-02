@@ -3,7 +3,7 @@
 ## Overview
 Create comprehensive documentation and extract SQL into separate files for steps 11 and 13.
 
-## Step 11: Gong Analysis SQL Files
+## Step 10: Gong Analysis SQL Files
 
 Extract from README into:
 - `01_create_stage.sql` - Create internal stage for transcripts
@@ -12,7 +12,7 @@ Extract from README into:
 - `04_create_sentiment_table.sql` - Create GONG_CALL_SENTIMENT table
 - `05_create_sentiment_summary.sql` - Create ACCOUNT_CALL_SENTIMENT table
 - `06_create_health_score.sql` - Create ACCOUNT_HEALTH_SCORE view
-- `07_semantic_view_update.sql` - YAML snippet for semantic view update
+- `06_semantic_view_update.sql` - YAML snippet for semantic view update
 
 ## Step 13: Postgres Activity Logs SQL Files
 
@@ -27,7 +27,7 @@ Extract from README into:
 
 1. Introduction and Prerequisites
 2. Steps 1-10: Core Setup (reference existing README)
-3. Step 11: Gong Analysis Integration
+3. Step 10: Gong Analysis Integration
 4. Step 12: Web Search
 5. Step 13: Postgres Activity Logs Pipeline
 6. Data Governance (brief mention)

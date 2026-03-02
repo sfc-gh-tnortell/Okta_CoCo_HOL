@@ -3,6 +3,9 @@
 -- ============================================================
 -- Uses real Fortune 500 company names spread across US timezones
 
+USE ROLE SYSADMIN;
+USE WAREHOUSE DEFAULT_WH;
+
 -- First, truncate if re-running
 TRUNCATE TABLE IF EXISTS PROD.RAW.SFDC_ACCOUNT;
 
