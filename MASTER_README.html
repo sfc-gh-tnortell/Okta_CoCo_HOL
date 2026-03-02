@@ -30,24 +30,31 @@
             margin-top: 30px;
         }
         pre {
-            background-color: #1a1a2e;
-            color: #e0e0e0;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
             padding: 15px;
             border-radius: 8px;
             overflow-x: auto;
-            font-size: 14px;
+            font-size: 13px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
         }
         code {
             background-color: #e8e8e8;
             padding: 2px 6px;
             border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
         }
         pre code {
             background-color: transparent;
             padding: 0;
+            white-space: pre;
+            display: block;
         }
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .comment { color: #6a9955; }
+        .function { color: #dcdcaa; }
         table {
             border-collapse: collapse;
             width: 100%;
@@ -122,6 +129,14 @@
             border-top: 1px solid #ddd;
             margin: 40px 0;
         }
+        .file-path {
+            background-color: #e8f4fc;
+            border-left: 3px solid #0066cc;
+            padding: 8px 12px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -140,10 +155,11 @@
     <li><a href="#part1">3. Part 1: Core Setup (Steps 1-9)</a></li>
     <li><a href="#part2">4. Part 2: Gong Transcript Analysis (Step 10)</a></li>
     <li><a href="#part3">5. Part 3: Postgres Activity Logs Pipeline (Step 11)</a></li>
-    <li><a href="#questions">6. Sample Questions</a></li>
-    <li><a href="#summary">7. Data Summary</a></li>
-    <li><a href="#troubleshooting">8. Troubleshooting</a></li>
-    <li><a href="#teardown">9. Teardown / Cleanup</a></li>
+    <li><a href="#adventure">6. Part 4: Choose Your Own Adventure</a></li>
+    <li><a href="#questions">7. Sample Questions</a></li>
+    <li><a href="#summary">8. Data Summary</a></li>
+    <li><a href="#troubleshooting">9. Troubleshooting</a></li>
+    <li><a href="#teardown">10. Teardown / Cleanup</a></li>
 </ul>
 </div>
 
@@ -234,22 +250,44 @@
 ├── 08_agent/             # Create Cortex Agent
 ├── 09_grants/            # Grant permissions</code></pre>
 
+<hr>
+
 <h3>Step 1: Database Setup</h3>
-<pre><code>@setup/01_database/01_create_database.sql</code></pre>
-<p>Creates the PROD database with RAW and FINAL schemas.</p>
+<p>📁 <strong>File</strong>: <code>setup/01_database/01_create_database.sql</code></p>
+<p>Creates the PROD database with RAW and FINAL schemas:</p>
+<pre><code><span class="keyword">USE ROLE</span> SYSADMIN;
+
+<span class="keyword">CREATE DATABASE IF NOT EXISTS</span> PROD;
+<span class="keyword">CREATE SCHEMA IF NOT EXISTS</span> PROD.RAW;
+<span class="keyword">CREATE SCHEMA IF NOT EXISTS</span> PROD.FINAL;
+
+<span class="comment">-- Verify</span>
+<span class="keyword">SHOW SCHEMAS IN DATABASE</span> PROD;</code></pre>
+
+<hr>
 
 <h3>Step 2: Create Raw Tables</h3>
-<pre><code>@setup/02_raw_tables/create_raw_tables.sql</code></pre>
-<p>Creates tables: SFDC_ACCOUNT, SFDC_PRODUCT, SFDC_CONTRACT, SFDC_SUBSCRIPTION, SFDC_OPPORTUNITY, SALES_TEAM</p>
-<p>Verify with:</p>
-<pre><code>SHOW TABLES LIKE 'SFDC%' IN SCHEMA PROD.RAW;</code></pre>
+<p>📁 <strong>File</strong>: <code>setup/02_raw_tables/create_raw_tables.sql</code></p>
+<p>Creates source tables for CRM data:</p>
+<ul>
+    <li><code>SFDC_ACCOUNT</code> - Customer accounts</li>
+    <li><code>SFDC_PRODUCT</code> - Identity products</li>
+    <li><code>SFDC_CONTRACT</code> - Customer contracts</li>
+    <li><code>SFDC_SUBSCRIPTION</code> - Product subscriptions</li>
+    <li><code>SFDC_OPPORTUNITY</code> - Sales opportunities</li>
+    <li><code>SALES_TEAM</code> - Sales team assignments</li>
+</ul>
+<p><strong>Verify:</strong></p>
+<pre><code><span class="keyword">SHOW TABLES LIKE</span> <span class="string">'SFDC%'</span> <span class="keyword">IN SCHEMA</span> PROD.RAW;</code></pre>
+
+<hr>
 
 <h3>Step 3: Generate Data</h3>
-<p>Run these scripts in order:</p>
-<pre><code>@setup/03_data_generation/01_insert_products.sql
-@setup/03_data_generation/02_insert_accounts.sql
-@setup/03_data_generation/03_fix_timezone_distribution.sql
-@setup/03_data_generation/04_create_contract_stage.sql</code></pre>
+<p>📁 <strong>Files</strong>:</p>
+<pre><code>setup/03_data_generation/01_insert_products.sql
+setup/03_data_generation/02_insert_accounts.sql
+setup/03_data_generation/03_fix_timezone_distribution.sql
+setup/03_data_generation/04_create_contract_stage.sql</code></pre>
 
 <p><strong>Upload PDF contracts:</strong></p>
 <ol>
@@ -259,35 +297,59 @@
     <li>Click <strong>Upload</strong></li>
 </ol>
 
-<p>Then continue:</p>
-<pre><code>@setup/03_data_generation/05_insert_contracts.sql
-@setup/03_data_generation/06_insert_subscriptions.sql
-@setup/03_data_generation/07_insert_opportunities.sql
-@setup/03_data_generation/08_insert_sales_teams.sql</code></pre>
+<p>Then continue with:</p>
+<pre><code>setup/03_data_generation/05_insert_contracts.sql
+setup/03_data_generation/06_insert_subscriptions.sql
+setup/03_data_generation/07_insert_opportunities.sql
+setup/03_data_generation/08_insert_sales_teams.sql</code></pre>
+
+<hr>
 
 <h3>Step 5: PDF Contracts Pipeline</h3>
-<p>Create enriched content and search service:</p>
-<pre><code>@setup/05_pdf_contracts/01_create_content_table.sql
-@setup/05_pdf_contracts/02_create_search_service.sql</code></pre>
+<p>📁 <strong>Files</strong>:</p>
+<pre><code>setup/05_pdf_contracts/01_create_content_table.sql
+setup/05_pdf_contracts/02_create_search_service.sql</code></pre>
+<p>Creates enriched contract content and Cortex Search service for semantic search over contract documents.</p>
+
+<hr>
 
 <h3>Step 6: Final Schema (Dynamic Tables)</h3>
-<pre><code>@setup/06_final_schema/01_create_account_daily_dt.sql
-@setup/06_final_schema/02_create_subscription_daily_dt.sql
-@setup/06_final_schema/03_create_opportunity_daily_dt.sql</code></pre>
+<p>📁 <strong>Files</strong>:</p>
+<pre><code>setup/06_final_schema/01_create_account_daily_dt.sql
+setup/06_final_schema/02_create_subscription_daily_dt.sql
+setup/06_final_schema/03_create_opportunity_daily_dt.sql</code></pre>
+<p>Creates dynamic tables that automatically refresh when source data changes:</p>
+<ul>
+    <li><code>ACCOUNT_DAILY</code> - Enriched account data with calculated fields</li>
+    <li><code>SUBSCRIPTION_DAILY</code> - Subscription details with ARR calculations</li>
+    <li><code>OPPORTUNITY_DAILY</code> - Opportunity data with status tracking</li>
+</ul>
+
+<hr>
 
 <h3>Step 7: Semantic View</h3>
-<p>Create the semantic view for Cortex Analyst:</p>
+<p>📁 <strong>File (Option A - SQL)</strong>: <code>setup/07_semantic_view/01_create_semantic_view.sql</code></p>
+<p>📁 <strong>File (Option B - YAML)</strong>: <code>setup/07_semantic_view/02_create_semantic_view_yaml.sql</code></p>
+<p>Creates the semantic view for Cortex Analyst natural language queries:</p>
+<pre><code><span class="keyword">CREATE OR REPLACE</span> SEMANTIC VIEW PROD.FINAL.CUSTOMER_360_SEMANTIC_VIEW
+  <span class="keyword">TABLES</span> (
+    accounts <span class="keyword">AS</span> PROD.FINAL.ACCOUNT_DAILY <span class="keyword">PRIMARY KEY</span> (ACCOUNT_ID)
+      <span class="keyword">WITH SYNONYMS</span> (<span class="string">'customers'</span>, <span class="string">'clients'</span>, <span class="string">'companies'</span>),
+    subscriptions <span class="keyword">AS</span> PROD.FINAL.SUBSCRIPTION_DAILY <span class="keyword">PRIMARY KEY</span> (SUBSCRIPTION_ID),
+    opportunities <span class="keyword">AS</span> PROD.FINAL.OPPORTUNITY_DAILY <span class="keyword">PRIMARY KEY</span> (OPPORTUNITY_ID)
+    <span class="comment">-- ... additional configuration</span>
+  )
+  <span class="keyword">RELATIONSHIPS</span> (...)
+  <span class="keyword">FACTS</span> (...)
+  <span class="keyword">DIMENSIONS</span> (...)
+  <span class="keyword">METRICS</span> (...);</code></pre>
 
-<h4>Option A: SQL Syntax</h4>
-<pre><code>@setup/07_semantic_view/01_create_semantic_view.sql</code></pre>
-
-<h4>Option B: YAML Syntax</h4>
-<pre><code>@setup/07_semantic_view/02_create_semantic_view_yaml.sql</code></pre>
+<hr>
 
 <h3>Step 8: Cortex Agent (with Web Search)</h3>
 
 <h4>8a: Enable Web Search (Account Level)</h4>
-<p>Web search must be enabled at the account level BEFORE creating the agent:</p>
+<p>Web search must be enabled at the account level <strong>BEFORE</strong> creating the agent:</p>
 <ol>
     <li>Sign in to <strong>Snowsight</strong></li>
     <li>Navigate to <strong>AI &amp; ML → Agents → Settings</strong> (gear icon)</li>
@@ -298,10 +360,37 @@
 </div>
 
 <h4>8b: Create Agent Schema</h4>
-<pre><code>@setup/08_agent/02_create_agent_schema.sql</code></pre>
+<p>📁 <strong>File</strong>: <code>setup/08_agent/02_create_agent_schema.sql</code></p>
+<pre><code><span class="keyword">USE ROLE</span> SYSADMIN;
+<span class="keyword">CREATE DATABASE IF NOT EXISTS</span> SNOWFLAKE_INTELLIGENCE;
+<span class="keyword">CREATE SCHEMA IF NOT EXISTS</span> SNOWFLAKE_INTELLIGENCE.AGENTS;</code></pre>
 
 <h4>8c: Create Agent</h4>
-<pre><code>@setup/08_agent/03_create_agent.sql</code></pre>
+<p>📁 <strong>File</strong>: <code>setup/08_agent/03_create_agent.sql</code></p>
+<pre><code><span class="keyword">CREATE OR REPLACE</span> AGENT SNOWFLAKE_INTELLIGENCE.AGENTS.CUSTOMER_360_AGENT
+<span class="keyword">COMMENT</span> = <span class="string">'Customer 360 Assistant for account health, contracts, and business insights'</span>
+<span class="keyword">PROFILE</span> = <span class="string">'{"display_name": "Customer 360 Assistant", "color": "blue"}'</span>
+<span class="keyword">FROM SPECIFICATION</span>
+$$
+models:
+  orchestration: claude-4-sonnet
+tools:
+  - tool_spec:
+      type: cortex_analyst_text_to_sql
+      name: Analyst
+  - tool_spec:
+      type: cortex_search
+      name: ContractSearch
+  - tool_spec:
+      type: web_search
+      name: WebSearch
+tool_resources:
+  Analyst:
+    semantic_view: PROD.FINAL.CUSTOMER_360_SEMANTIC_VIEW
+  ContractSearch:
+    name: PROD.FINAL.CONTRACT_SEARCH
+    max_results: <span class="string">"10"</span>
+$$;</code></pre>
 
 <p>The agent includes:</p>
 <ul>
@@ -319,12 +408,19 @@
 <ol>
     <li>Navigate to <strong>AI &amp; ML → Snowflake Intelligence</strong></li>
     <li>The <code>CUSTOMER_360_AGENT</code> should appear in the agent list</li>
-    <li>Click to open and test with a sample question like "Which accounts are at risk?"</li>
+    <li>Click to open and test with: <em>"Which accounts are at risk?"</em></li>
 </ol>
 </div>
 
+<hr>
+
 <h3>Step 9: Permissions</h3>
-<pre><code>@setup/09_grants/01_grant_permissions.sql</code></pre>
+<p>📁 <strong>File</strong>: <code>setup/09_grants/01_grant_permissions.sql</code></p>
+<pre><code><span class="comment">-- Grant access to semantic view</span>
+<span class="keyword">GRANT SELECT ON SEMANTIC VIEW</span> PROD.FINAL.CUSTOMER_360_SEMANTIC_VIEW <span class="keyword">TO ROLE</span> PUBLIC;
+
+<span class="comment">-- Grant access to agent</span>
+<span class="keyword">GRANT USAGE ON AGENT</span> SNOWFLAKE_INTELLIGENCE.AGENTS.CUSTOMER_360_AGENT <span class="keyword">TO ROLE</span> PUBLIC;</code></pre>
 
 <hr>
 
@@ -340,10 +436,16 @@
 ├── 04_create_sentiment_analysis.sql # Sentiment extraction + health score
 ├── 05_grant_permissions.sql         # Grant access to Gong objects</code></pre>
 
-<h3>Step 10a: Create Transcript Stage</h3>
-<pre><code>@setup/10_gong_analysis/01_create_stage.sql</code></pre>
+<hr>
 
-<p>Then upload <code>.txt</code> files via Snowsight:</p>
+<h3>Step 10a: Create Transcript Stage</h3>
+<p>📁 <strong>File</strong>: <code>setup/10_gong_analysis/01_create_stage.sql</code></p>
+<pre><code><span class="keyword">CREATE OR REPLACE</span> STAGE PROD.RAW.GONG_TRANSCRIPTS_STAGE
+<span class="keyword">DIRECTORY</span> = ( ENABLE = <span class="keyword">true</span> )
+<span class="keyword">ENCRYPTION</span> = ( TYPE = <span class="string">'SNOWFLAKE_SSE'</span> )
+<span class="keyword">COMMENT</span> = <span class="string">'Stage for Gong call transcript files'</span>;</code></pre>
+
+<p><strong>Upload transcript files:</strong></p>
 <ol>
     <li>Navigate to <strong>Data → Databases → PROD → RAW → Stages</strong></li>
     <li>Click on <code>GONG_TRANSCRIPTS_STAGE</code></li>
@@ -351,22 +453,60 @@
     <li>Click <strong>Upload</strong></li>
 </ol>
 
+<hr>
+
 <h3>Step 10b: Create Source Table</h3>
-<pre><code>@setup/10_gong_analysis/02_create_source_table.sql</code></pre>
+<p>📁 <strong>File</strong>: <code>setup/10_gong_analysis/02_create_source_table.sql</code></p>
+<pre><code><span class="keyword">CREATE OR REPLACE TABLE</span> PROD.RAW.GONG_TRANSCRIPTS (
+    CALL_ID <span class="keyword">VARCHAR</span>,
+    ACCOUNT_ID <span class="keyword">VARCHAR</span>,
+    ACCOUNT_NAME <span class="keyword">VARCHAR</span>,
+    CALL_DATE <span class="keyword">DATE</span>,
+    PARTICIPANTS <span class="keyword">ARRAY</span>,
+    TRANSCRIPT <span class="keyword">TEXT</span>,
+    FILE_NAME <span class="keyword">VARCHAR</span>
+);
+
+<span class="comment">-- Parse and load transcripts from stage</span>
+<span class="keyword">INSERT INTO</span> PROD.RAW.GONG_TRANSCRIPTS ...;</code></pre>
+
+<hr>
 
 <h3>Step 10c: Create Search Service</h3>
-<pre><code>@setup/10_gong_analysis/03_create_search_service.sql</code></pre>
+<p>📁 <strong>File</strong>: <code>setup/10_gong_analysis/03_create_search_service.sql</code></p>
+<pre><code><span class="keyword">CREATE OR REPLACE</span> CORTEX SEARCH SERVICE PROD.FINAL.TRANSCRIPT_SEARCH
+  <span class="keyword">ON</span> TRANSCRIPT
+  <span class="keyword">ATTRIBUTES</span> ACCOUNT_NAME, CALL_DATE, CALL_ID
+  <span class="keyword">WAREHOUSE</span> = COMPUTE_WH
+  <span class="keyword">TARGET_LAG</span> = <span class="string">'1 hour'</span>
+<span class="keyword">AS</span> (
+  <span class="keyword">SELECT</span> * <span class="keyword">FROM</span> PROD.RAW.GONG_TRANSCRIPTS
+);</code></pre>
+
+<hr>
 
 <h3>Step 10d: Create Sentiment Analysis &amp; Health Score</h3>
-<pre><code>@setup/10_gong_analysis/04_create_sentiment_analysis.sql</code></pre>
-<p>This creates:</p>
+<p>📁 <strong>File</strong>: <code>setup/10_gong_analysis/04_create_sentiment_analysis.sql</code></p>
+<p>Creates:</p>
 <ul>
-    <li><code>PROD.RAW.GONG_CALL_SENTIMENT</code> - Per-call sentiment</li>
+    <li><code>PROD.RAW.GONG_CALL_SENTIMENT</code> - Per-call sentiment using Snowflake.Cortex.Sentiment</li>
     <li><code>PROD.FINAL.ACCOUNT_CALL_SENTIMENT</code> - Account-level sentiment summary</li>
     <li><code>PROD.FINAL.ACCOUNT_HEALTH_SCORE</code> - Composite health score view</li>
 </ul>
+<pre><code><span class="comment">-- Sentiment analysis using Cortex</span>
+<span class="keyword">CREATE OR REPLACE TABLE</span> PROD.RAW.GONG_CALL_SENTIMENT <span class="keyword">AS</span>
+<span class="keyword">SELECT</span>
+    CALL_ID,
+    ACCOUNT_ID,
+    ACCOUNT_NAME,
+    CALL_DATE,
+    <span class="function">SNOWFLAKE.CORTEX.SENTIMENT</span>(TRANSCRIPT) <span class="keyword">AS</span> SENTIMENT_SCORE
+<span class="keyword">FROM</span> PROD.RAW.GONG_TRANSCRIPTS;</code></pre>
+
+<hr>
 
 <h3>Step 10e: Grant Permissions</h3>
+<p>📁 <strong>File</strong>: <code>setup/10_gong_analysis/05_grant_permissions.sql</code></p>
 <pre><code>@setup/10_gong_analysis/05_grant_permissions.sql</code></pre>
 
 <h3>Step 10f: Add TranscriptSearch to Agent (UI)</h3>
@@ -428,44 +568,147 @@
 
 <h3>Folder Structure</h3>
 <pre><code>setup/11_postgres_activity_logs/
-├── 01_create_network_rule.sql     # Network rule for Postgres
-├── 02_create_postgres_tables.sql  # DDL for Postgres tables
-├── 03_enable_replication.sql      # Enable CDC replication
-├── 04_configure_external_access.sql # External access for Openflow
-├── 05_verification_queries.sql    # Verification and analytics queries
-├── generate_activity_data.sql     # Sample data generation</code></pre>
+├── 01_create_network_rule.sql        # Network rule for Postgres access
+├── 02_create_postgres_tables.sql     # DDL for Postgres tables (run in Postgres)
+├── 03_enable_replication.sql         # Enable CDC replication (run in Postgres)
+├── 04_generate_activity_data.sql     # Sample data generation (run in Postgres)
+├── 05_configure_external_access.sql  # External access for Openflow (run in Snowflake)
+├── 06_verification_queries.sql       # Verification and analytics queries
+├── 07_streaming_procedure.sql        # Real-time data simulator (run in Postgres)</code></pre>
+
+<hr>
 
 <h3>Step 11a: Create Network Rule</h3>
-<pre><code>@setup/11_postgres_activity_logs/01_create_network_rule.sql</code></pre>
+<p>📁 <strong>File</strong>: <code>setup/11_postgres_activity_logs/01_create_network_rule.sql</code></p>
+<pre><code><span class="comment">-- Create network policy for Postgres external connections</span>
+<span class="keyword">USE ROLE</span> ACCOUNTADMIN;
+
+<span class="keyword">CREATE OR REPLACE</span> NETWORK POLICY POSTGRES_ACCESS_POLICY
+  ALLOWED_IP_LIST = (<span class="string">'0.0.0.0/0'</span>)  <span class="comment">-- Update with your specific IPs for production</span>
+  <span class="keyword">COMMENT</span> = <span class="string">'Network policy for Postgres instance access'</span>;</code></pre>
+
+<hr>
 
 <h3>Step 11b: Create Postgres Instance (Snowsight UI)</h3>
 <ol>
-    <li>Navigate to <strong>Data → Databases → + Database</strong></li>
-    <li>Select <strong>Postgres</strong> as the database type</li>
+    <li>Navigate to <strong>Postgres</strong> in the left navigation menu (its own section, NOT under Data → Databases)</li>
+    <li>Click <strong>+ Instance</strong> to create a new Postgres instance</li>
     <li>Configure:
         <ul>
             <li><strong>Name</strong>: <code>okta_activity_logs</code></li>
             <li><strong>Compute Family</strong>: BURST_S</li>
             <li><strong>Storage</strong>: 25 GB</li>
-            <li><strong>Network Policy</strong>: <code>POSTGRES_ACCESS_POLICY</code></li>
+            <li><strong>Postgres Version</strong>: 18</li>
+            <li><strong>Network Policy</strong>: <code>POSTGRES_ACCESS_POLICY</code> (created in Step 11a)</li>
         </ul>
     </li>
-    <li>Save connection credentials</li>
+    <li>Click <strong>Create</strong> and <strong>save your connection credentials</strong> (you'll need them for connecting)</li>
 </ol>
 
+<div class="note">
+<strong>Note:</strong> After creation, you can find the connection string in the instance details. It will look like: <code>jdbc:postgresql://&lt;instance-id&gt;.postgres.snowflake.app:5432/postgres</code>
+</div>
+
+<hr>
+
 <h3>Step 11c: Create Postgres Tables</h3>
-<p>Connect to your Postgres instance and run:</p>
-<pre><code>@setup/11_postgres_activity_logs/02_create_postgres_tables.sql</code></pre>
+<p>📁 <strong>File</strong>: <code>setup/11_postgres_activity_logs/02_create_postgres_tables.sql</code></p>
+<div class="important">
+<strong>Important:</strong> Run this in your Postgres client (DBeaver, psql CLI, etc.) - NOT in Snowflake UI.
+</div>
+<pre><code><span class="comment">-- Create tables for activity log CDC</span>
+<span class="keyword">CREATE TABLE</span> users (
+    user_id <span class="keyword">SERIAL PRIMARY KEY</span>,
+    okta_id <span class="keyword">VARCHAR</span>(50) <span class="keyword">UNIQUE NOT NULL</span>,
+    email <span class="keyword">VARCHAR</span>(255) <span class="keyword">NOT NULL</span>,
+    full_name <span class="keyword">VARCHAR</span>(255),
+    account_name <span class="keyword">VARCHAR</span>(255),
+    created_at <span class="keyword">TIMESTAMP DEFAULT CURRENT_TIMESTAMP</span>
+);
+
+<span class="keyword">CREATE TABLE</span> product_user_assignment (
+    assignment_id <span class="keyword">SERIAL PRIMARY KEY</span>,
+    user_id <span class="keyword">INTEGER REFERENCES</span> users(user_id),
+    product_code <span class="keyword">VARCHAR</span>(10),
+    assigned_at <span class="keyword">TIMESTAMP DEFAULT CURRENT_TIMESTAMP</span>
+);
+
+<span class="keyword">CREATE TABLE</span> device_auth_logs (
+    log_id <span class="keyword">SERIAL PRIMARY KEY</span>,
+    user_id <span class="keyword">INTEGER REFERENCES</span> users(user_id),
+    event_type <span class="keyword">VARCHAR</span>(50),
+    device_type <span class="keyword">VARCHAR</span>(50),
+    ip_address <span class="keyword">VARCHAR</span>(50),
+    geo_location <span class="keyword">JSONB</span>,
+    created_at <span class="keyword">TIMESTAMP DEFAULT CURRENT_TIMESTAMP</span>
+);</code></pre>
+
+<hr>
 
 <h3>Step 11d: Enable Replication</h3>
-<pre><code>@setup/11_postgres_activity_logs/03_enable_replication.sql</code></pre>
+<p>📁 <strong>File</strong>: <code>setup/11_postgres_activity_logs/03_enable_replication.sql</code></p>
+<div class="important">
+<strong>Important:</strong> Run this in your Postgres client - NOT in Snowflake UI.
+</div>
+<pre><code><span class="comment">-- Create publication for CDC replication</span>
+<span class="keyword">CREATE PUBLICATION</span> openflow_publication <span class="keyword">FOR ALL TABLES</span>;
+
+<span class="comment">-- Verify publication</span>
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> pg_publication;</code></pre>
+
+<hr>
 
 <h3>Step 11e: Generate Sample Data</h3>
-<pre><code>@setup/11_postgres_activity_logs/generate_activity_data.sql</code></pre>
+<p>📁 <strong>File</strong>: <code>setup/11_postgres_activity_logs/04_generate_activity_data.sql</code></p>
+<div class="important">
+<strong>Important:</strong> Run this in your Postgres client - NOT in Snowflake UI.
+</div>
+<pre><code><span class="comment">-- Insert sample users linked to existing Okta accounts</span>
+<span class="keyword">INSERT INTO</span> users (okta_id, email, full_name, account_name)
+<span class="keyword">SELECT</span> 
+    <span class="string">'okta_'</span> || <span class="function">md5</span>(<span class="function">random</span>()::<span class="keyword">text</span>),
+    <span class="function">lower</span>(<span class="function">replace</span>(full_name, <span class="string">' '</span>, <span class="string">'.'</span>)) || <span class="string">'@'</span> || <span class="function">lower</span>(account_name) || <span class="string">'.com'</span>,
+    full_name,
+    account_name
+<span class="keyword">FROM</span> (
+    <span class="keyword">SELECT</span> <span class="string">'John Smith'</span> <span class="keyword">as</span> full_name, <span class="string">'Microsoft'</span> <span class="keyword">as</span> account_name
+    <span class="keyword">UNION ALL SELECT</span> <span class="string">'Jane Doe'</span>, <span class="string">'Apple'</span>
+    <span class="comment">-- ... additional users</span>
+) sample_users;</code></pre>
 
-<h3>Step 11f: Configure External Access for Openflow</h3>
-<p>Update the network rule with your Postgres host, then run:</p>
-<pre><code>@setup/11_postgres_activity_logs/04_configure_external_access.sql</code></pre>
+<hr>
+
+<h3>Step 11f: Configure External Access (Back to Snowflake)</h3>
+<p>📁 <strong>File</strong>: <code>setup/11_postgres_activity_logs/05_configure_external_access.sql</code></p>
+<div class="success">
+<strong>Note:</strong> Now execute these commands in Snowflake UI - this configures Snowflake to connect to Postgres.
+</div>
+<pre><code><span class="comment">-- Create database for CDC data</span>
+<span class="keyword">USE ROLE</span> SYSADMIN;
+<span class="keyword">CREATE DATABASE IF NOT EXISTS</span> Okta_PGCDC_DB;
+
+<span class="comment">-- Create role for Openflow</span>
+<span class="keyword">USE ROLE</span> ACCOUNTADMIN;
+<span class="keyword">CREATE ROLE IF NOT EXISTS</span> Postgres_HOL_ROLE;
+<span class="keyword">GRANT ROLE</span> Postgres_HOL_ROLE <span class="keyword">TO ROLE</span> SYSADMIN;
+
+<span class="comment">-- Create warehouse</span>
+<span class="keyword">CREATE WAREHOUSE IF NOT EXISTS</span> Okta_PGCDC_WH 
+  WAREHOUSE_SIZE = <span class="string">'XSMALL'</span>
+  AUTO_SUSPEND = 60;
+
+<span class="comment">-- Create external access integration</span>
+<span class="comment">-- Update HOST_VALUE with your Postgres instance hostname</span>
+<span class="keyword">CREATE OR REPLACE</span> NETWORK RULE okta_pgcdc_rule
+  TYPE = HOST_PORT
+  MODE = EGRESS
+  VALUE_LIST = (<span class="string">'&lt;your-instance&gt;.postgres.snowflake.app:5432'</span>);
+
+<span class="keyword">CREATE OR REPLACE</span> EXTERNAL ACCESS INTEGRATION okta_pgcdc_access
+  ALLOWED_NETWORK_RULES = (okta_pgcdc_rule)
+  ENABLED = <span class="keyword">true</span>;</code></pre>
+
+<hr>
 
 <h3>Step 11g: Configure Openflow CDC Pipeline</h3>
 
@@ -479,36 +722,338 @@
     <tr><td>External Access Integration</td><td><code>okta_pgcdc_access</code></td></tr>
 </table>
 
-<h4>2. Configure Source Parameters</h4>
+<h4>2. Install PostgreSQL Connector</h4>
+<ul>
+    <li>Go to <strong>Openflow → Connectors</strong> tab</li>
+    <li>Find <strong>PostgreSQL</strong> in the connector list</li>
+    <li>Click <strong>Install</strong> to add it to your deployment</li>
+</ul>
+
+<h4>3. Download and Upload JDBC Driver</h4>
+<ol>
+    <li>Download the PostgreSQL JDBC driver from <a href="https://jdbc.postgresql.org/download/">jdbc.postgresql.org</a> (e.g., <code>postgresql-42.7.7.jar</code>)</li>
+    <li>You'll upload this as a Reference Asset when configuring Source Parameters</li>
+</ol>
+
+<h4>4. Add PostgreSQL Connector</h4>
+<p>Click <strong>+ Add Connector</strong> → <strong>PostgreSQL</strong></p>
+
+<h4>5. Configure Source Parameters</h4>
+<p>From the Parameter contexts list, edit <strong>PostgreSQL Source Parameters</strong>:</p>
 <table>
-    <tr><th>Parameter</th><th>Value</th></tr>
-    <tr><td>PostgreSQL Connection URL</td><td><code>jdbc:postgresql://&lt;host&gt;:5432/postgres</code></td></tr>
-    <tr><td>PostgreSQL JDBC Driver</td><td><code>postgresql-42.7.7.jar</code></td></tr>
-    <tr><td>PostgreSQL Username</td><td><code>snowflake_admin</code></td></tr>
-    <tr><td>Publication Name</td><td><code>openflow_publication</code></td></tr>
+    <tr><th>Parameter</th><th>Value</th><th>Description</th></tr>
+    <tr><td>PostgreSQL Connection URL</td><td><code>jdbc:postgresql://&lt;your-instance&gt;.postgres.snowflake.app:5432/postgres</code></td><td>JDBC connection URL from Postgres instance details</td></tr>
+    <tr><td>PostgreSQL JDBC Driver</td><td><code>postgresql-42.7.7.jar</code></td><td>Click file icon → Reference Asset → Upload your downloaded JAR</td></tr>
+    <tr><td>PostgreSQL Password</td><td><code>&lt;your-password&gt;</code></td><td>Password saved from instance creation</td></tr>
+    <tr><td>PostgreSQL Username</td><td><code>snowflake_admin</code></td><td>Default admin user</td></tr>
+    <tr><td>Publication Name</td><td><code>openflow_publication</code></td><td>Publication created in Step 11d</td></tr>
+    <tr><td>Replication Slot Name</td><td><em>(leave empty)</em></td><td>Auto-generated by Openflow</td></tr>
 </table>
 
-<h4>3. Configure Destination Parameters</h4>
+<h4>6. Configure Destination Parameters</h4>
+<p>Edit <strong>PostgreSQL Destination Parameters</strong>:</p>
 <table>
-    <tr><th>Parameter</th><th>Value</th></tr>
-    <tr><td>Destination Database</td><td><code>Okta_PGCDC_DB</code></td></tr>
-    <tr><td>Snowflake Authentication Strategy</td><td><code>SNOWFLAKE_MANAGED</code></td></tr>
-    <tr><td>Snowflake Role</td><td><code>Postgres_HOL_ROLE</code></td></tr>
-    <tr><td>Snowflake Warehouse</td><td><code>Okta_PGCDC_WH</code></td></tr>
+    <tr><th>Parameter</th><th>Value</th><th>Description</th></tr>
+    <tr><td>Destination Database</td><td><code>Okta_PGCDC_DB</code></td><td>Target Snowflake database</td></tr>
+    <tr><td>Snowflake Authentication Strategy</td><td><code>SNOWFLAKE_MANAGED</code></td><td>Uses Snowflake managed authentication</td></tr>
+    <tr><td>Snowflake Role</td><td><code>Postgres_HOL_ROLE</code></td><td>Role with table creation privileges</td></tr>
+    <tr><td>Snowflake Warehouse</td><td><code>Okta_PGCDC_WH</code></td><td>Warehouse for data processing</td></tr>
+    <tr><td>Snowflake Account Identifier</td><td><em>(leave empty)</em></td><td>Not needed with session token</td></tr>
+    <tr><td>Snowflake Username</td><td><em>(leave empty)</em></td><td>Not needed with session token</td></tr>
+    <tr><td>Snowflake Private Key</td><td><em>(leave empty)</em></td><td>Not needed with session token</td></tr>
 </table>
 
-<h4>4. Enable and Start</h4>
+<h4>7. Configure Ingestion Parameters</h4>
+<p>Edit <strong>PostgreSQL Ingestion Parameters</strong>:</p>
+<table>
+    <tr><th>Parameter</th><th>Value</th><th>Description</th></tr>
+    <tr><td>Included Table Regex</td><td><code>public\..*</code></td><td>Matches all tables in public schema</td></tr>
+    <tr><td>Column Filter JSON</td><td><code>[]</code></td><td>Empty = include all columns</td></tr>
+    <tr><td>Ingestion Type</td><td><code>full</code></td><td>Full snapshot + incremental CDC</td></tr>
+    <tr><td>Merge Task Schedule CRON</td><td><code>* * * * * ?</code></td><td>Every second for near real-time</td></tr>
+</table>
+
+<h4>8. Enable and Start</h4>
 <ul>
     <li>Right-click connector → <strong>Enable all controller services</strong></li>
     <li>Right-click connector → <strong>Start</strong></li>
+    <li>Monitor the connector flow to watch the snapshot load</li>
 </ul>
 
+<hr>
+
 <h3>Step 11h: Verify Data Flow</h3>
-<pre><code>@setup/11_postgres_activity_logs/05_verification_queries.sql</code></pre>
+<p>📁 <strong>File</strong>: <code>setup/11_postgres_activity_logs/06_verification_queries.sql</code></p>
+<pre><code><span class="comment">-- Check CDC tables (note: lowercase with quotes required)</span>
+<span class="keyword">SELECT COUNT</span>(*) <span class="keyword">FROM</span> Okta_PGCDC_DB.<span class="string">"public"</span>.<span class="string">"users"</span>;
+<span class="keyword">SELECT COUNT</span>(*) <span class="keyword">FROM</span> Okta_PGCDC_DB.<span class="string">"public"</span>.<span class="string">"device_auth_logs"</span>;
+
+<span class="comment">-- View recent auth events</span>
+<span class="keyword">SELECT</span> 
+    u.<span class="string">"full_name"</span>,
+    u.<span class="string">"account_name"</span>, 
+    d.<span class="string">"event_type"</span>,
+    d.<span class="string">"device_type"</span>,
+    d.<span class="string">"created_at"</span>
+<span class="keyword">FROM</span> Okta_PGCDC_DB.<span class="string">"public"</span>.<span class="string">"device_auth_logs"</span> d
+<span class="keyword">JOIN</span> Okta_PGCDC_DB.<span class="string">"public"</span>.<span class="string">"users"</span> u <span class="keyword">ON</span> d.<span class="string">"user_id"</span> = u.<span class="string">"user_id"</span>
+<span class="keyword">ORDER BY</span> d.<span class="string">"created_at"</span> <span class="keyword">DESC</span>
+<span class="keyword">LIMIT</span> 10;</code></pre>
 
 <div class="important">
 <strong>Important:</strong> Schema and table names from Postgres are lowercase and require double quotes: <code>"public"</code>, <code>"users"</code>, <code>"user_id"</code>, etc.
 </div>
+
+<hr>
+
+<h3>Step 11i: Create Streaming Procedure (Postgres)</h3>
+<p>📁 <strong>File</strong>: <code>setup/11_postgres_activity_logs/07_streaming_procedure.sql</code></p>
+<div class="important">
+<strong>Important:</strong> Run this in your Postgres client (DBeaver, psql CLI, etc.) - do NOT run in Snowflake UI. This is PostgreSQL code.
+</div>
+<pre><code><span class="comment">-- Create streaming procedure for real-time CDC testing</span>
+<span class="keyword">CREATE OR REPLACE PROCEDURE</span> stream_auth_logs(batch_size <span class="keyword">INT</span>, num_batches <span class="keyword">INT</span>)
+<span class="keyword">LANGUAGE</span> plpgsql
+<span class="keyword">AS</span> $$
+<span class="keyword">DECLARE</span>
+    i <span class="keyword">INT</span>;
+    j <span class="keyword">INT</span>;
+    random_user_id <span class="keyword">INT</span>;
+    random_ip <span class="keyword">TEXT</span>;
+    random_session_id <span class="keyword">TEXT</span>;
+    event_types <span class="keyword">TEXT</span>[] := <span class="keyword">ARRAY</span>[<span class="string">'LOGIN_SUCCESS'</span>,<span class="string">'LOGIN_FAILURE'</span>,<span class="string">'MFA_CHALLENGE'</span>];
+    device_types <span class="keyword">TEXT</span>[] := <span class="keyword">ARRAY</span>[<span class="string">'Windows'</span>,<span class="string">'MacOS'</span>,<span class="string">'iOS'</span>,<span class="string">'Android'</span>];
+<span class="keyword">BEGIN</span>
+    <span class="keyword">FOR</span> i <span class="keyword">IN</span> 1..num_batches <span class="keyword">LOOP</span>
+        <span class="keyword">FOR</span> j <span class="keyword">IN</span> 1..batch_size <span class="keyword">LOOP</span>
+            <span class="keyword">SELECT</span> user_id <span class="keyword">INTO</span> random_user_id 
+            <span class="keyword">FROM</span> users <span class="keyword">ORDER BY</span> <span class="function">random</span>() <span class="keyword">LIMIT</span> 1;
+            
+            <span class="comment">-- Generate random IP</span>
+            random_ip := <span class="function">floor</span>(<span class="function">random</span>() * 256)::<span class="keyword">int</span> || <span class="string">'.'</span> || 
+                         <span class="function">floor</span>(<span class="function">random</span>() * 256)::<span class="keyword">int</span> || <span class="string">'.'</span> || 
+                         <span class="function">floor</span>(<span class="function">random</span>() * 256)::<span class="keyword">int</span> || <span class="string">'.'</span> || 
+                         <span class="function">floor</span>(<span class="function">random</span>() * 256)::<span class="keyword">int</span>;
+            
+            <span class="comment">-- Generate random session ID</span>
+            random_session_id := <span class="string">'sess_'</span> || <span class="function">substr</span>(<span class="function">md5</span>(<span class="function">random</span>()::<span class="keyword">text</span>), 1, 12);
+            
+            <span class="keyword">INSERT INTO</span> device_auth_logs (user_id, event_type, device_type, ip_address, geo_location)
+            <span class="keyword">VALUES</span> (
+                random_user_id,
+                event_types[1 + <span class="function">floor</span>(<span class="function">random</span>() * <span class="function">array_length</span>(event_types, 1))::<span class="keyword">int</span>],
+                device_types[1 + <span class="function">floor</span>(<span class="function">random</span>() * <span class="function">array_length</span>(device_types, 1))::<span class="keyword">int</span>],
+                random_ip,
+                <span class="function">jsonb_build_object</span>(<span class="string">'session_id'</span>, random_session_id)
+            );
+        <span class="keyword">END LOOP</span>;
+        <span class="keyword">PERFORM</span> <span class="function">pg_sleep</span>(1);  <span class="comment">-- 1 second delay between batches</span>
+    <span class="keyword">END LOOP</span>;
+<span class="keyword">END</span>;
+$$;</code></pre>
+
+<p>To generate test data for real-time CDC testing:</p>
+<pre><code><span class="comment">-- Generate 100 auth logs (10 batches of 10, with 1 second between batches)</span>
+<span class="keyword">CALL</span> stream_auth_logs(<span class="string">10</span>, <span class="string">10</span>);</code></pre>
+
+<hr>
+
+<h2 id="adventure">Part 4: Choose Your Own Adventure 🚀</h2>
+
+<p>This section provides ideas for extending the Customer 360 solution using <strong>Cortex Code</strong> - Snowflake's AI-powered CLI. Each adventure builds on what you've created and demonstrates additional Snowflake capabilities.</p>
+
+<h3>Installing Cortex Code CLI</h3>
+
+<p>Before starting any adventure, install and configure Cortex Code:</p>
+
+<pre><code><span class="comment"># Install via pip</span>
+pip install snowflake-cortex-code
+
+<span class="comment"># Or via Homebrew (macOS)</span>
+brew install snowflake-cortex-code
+
+<span class="comment"># Authenticate with your Snowflake account</span>
+cortex login</code></pre>
+
+<p>Once installed, you can use natural language to build features:</p>
+<pre><code><span class="comment"># Start an interactive session</span>
+cortex chat
+
+<span class="comment"># Or run a one-off command</span>
+cortex <span class="string">"create a view that joins account data with auth logs"</span></code></pre>
+
+<hr>
+
+<h3>Adventure A: Data Governance &amp; PII Detection</h3>
+
+<p><strong>Goal</strong>: Classify and protect sensitive data in your Postgres CDC tables.</p>
+
+<p>The <code>device_auth_logs</code> table contains potentially sensitive information (IP addresses, geo-location, device info). Use Snowflake's data classification to identify and protect PII.</p>
+
+<p><strong>Prompt Cortex Code:</strong></p>
+<pre><code>Classify the tables in Okta_PGCDC_DB."public" for PII and sensitive data. 
+Create masking policies for any identified PII fields and apply them to the 
+PUBLIC role while allowing SYSADMIN to see unmasked data.</code></pre>
+
+<p><strong>What you'll learn:</strong></p>
+<ul>
+    <li>SYSTEM$CLASSIFY for automatic PII detection</li>
+    <li>Creating and applying masking policies</li>
+    <li>Row access policies for geographic restrictions</li>
+    <li>Audit logging with ACCESS_HISTORY</li>
+</ul>
+
+<hr>
+
+<h3>Adventure B: Add Usage Analytics to Account 360</h3>
+
+<p><strong>Goal</strong>: Integrate Postgres activity data into the semantic view for complete customer visibility.</p>
+
+<p>Create views that summarize license utilization and authentication patterns, then add them to the Customer 360 semantic view.</p>
+
+<p><strong>Prompt Cortex Code:</strong></p>
+<pre><code>Create a view in PROD.FINAL called ACCOUNT_USAGE_METRICS that joins the 
+Okta_PGCDC_DB CDC tables with PROD.FINAL.ACCOUNT_DAILY to show:
+- License assignment rate (assigned users / subscription quantity)
+- Active user rate (users with auth events in last 30 days / assigned users)  
+- Auth success rate
+- Most common device types
+Group by account and include the account name.</code></pre>
+
+<p>Then update your semantic view to include the new metrics.</p>
+
+<hr>
+
+<h3>Adventure C: Build a Streamlit Dashboard</h3>
+
+<p><strong>Goal</strong>: Create an interactive Customer 360 dashboard using Streamlit in Snowflake.</p>
+
+<p><strong>Prompt Cortex Code:</strong></p>
+<pre><code>Create a Streamlit app that shows a Customer 360 dashboard with:
+1. Account selector dropdown
+2. Key metrics cards (ARR, health score, products owned)
+3. Product timeline chart showing adds/churns
+4. Recent Gong call sentiment summary
+5. Contract renewal countdown
+Use the semantic view PROD.FINAL.CUSTOMER_360_SEMANTIC_VIEW for data.</code></pre>
+
+<p><strong>What you'll learn:</strong></p>
+<ul>
+    <li>Streamlit in Snowflake deployment</li>
+    <li>Connecting to semantic views from Python</li>
+    <li>Interactive visualizations with Altair/Plotly</li>
+</ul>
+
+<hr>
+
+<h3>Adventure D: Predictive Churn Model</h3>
+
+<p><strong>Goal</strong>: Build an ML model to predict which accounts are likely to churn.</p>
+
+<p><strong>Prompt Cortex Code:</strong></p>
+<pre><code><span class="keyword">Using</span> Snowflake ML, create a classification model to predict account churn using:
+- Health score trends
+- Product coverage changes
+- Gong sentiment patterns
+- Authentication activity (if available)
+- Days until renewal
+
+Train on historical data where STATUS = <span class="string">'Churned'</span> as the target. 
+Register the model in the Snowflake Model Registry.</code></pre>
+
+<p><strong>What you'll learn:</strong></p>
+<ul>
+    <li>Snowflake ML model training</li>
+    <li>Feature engineering from multiple sources</li>
+    <li>Model Registry for versioning</li>
+    <li>Inference in SQL with MODEL_PREDICT</li>
+</ul>
+
+<hr>
+
+<h3>Adventure E: Automated Alerts with Tasks</h3>
+
+<p><strong>Goal</strong>: Create proactive notifications for at-risk accounts.</p>
+
+<p><strong>Prompt Cortex Code:</strong></p>
+<pre><code>Create a Snowflake Task that runs daily and:
+1. Identifies accounts with health score &lt; 50 AND renewal in next 90 days
+2. Checks for negative Gong sentiment in last 30 days
+3. Sends a summary to a Slack webhook or email notification
+4. Logs alerts to an ACCOUNT_ALERTS table for tracking</code></pre>
+
+<p><strong>What you'll learn:</strong></p>
+<ul>
+    <li>Snowflake Tasks and scheduling</li>
+    <li>External functions for notifications</li>
+    <li>Alert tracking and deduplication</li>
+</ul>
+
+<hr>
+
+<h3>Adventure F: Executive Summary Generator</h3>
+
+<p><strong>Goal</strong>: Use Cortex LLM functions to generate account summaries.</p>
+
+<p><strong>Prompt Cortex Code:</strong></p>
+<pre><code>Create a stored procedure that generates an executive summary for any account using:
+- <span class="function">CORTEX.COMPLETE</span> to synthesize account data
+- Recent Gong transcript highlights
+- Product history and health metrics
+- Upcoming renewal information
+
+The procedure should return a formatted markdown summary suitable for 
+executive review before customer meetings.</code></pre>
+
+<p><strong>What you'll learn:</strong></p>
+<ul>
+    <li>Cortex LLM functions (COMPLETE, SUMMARIZE)</li>
+    <li>Prompt engineering for business context</li>
+    <li>Combining structured and unstructured data</li>
+</ul>
+
+<hr>
+
+<h3>Adventure G: Competitive Intelligence Tracker</h3>
+
+<p><strong>Goal</strong>: Monitor competitor mentions across customer interactions.</p>
+
+<p><strong>Prompt Cortex Code:</strong></p>
+<pre><code>Create a pipeline that:
+1. Searches Gong transcripts for competitor mentions (Ping Identity, Auth0, 
+   Microsoft Entra, CyberArk, ForgeRock)
+2. Uses <span class="function">CORTEX.SENTIMENT</span> to analyze the context (positive/negative for us)
+3. Stores findings in a COMPETITIVE_INTELLIGENCE table
+4. Creates a view summarizing competitor threat level by account</code></pre>
+
+<p><strong>What you'll learn:</strong></p>
+<ul>
+    <li>Text pattern matching with Cortex Search</li>
+    <li>Sentiment analysis in context</li>
+    <li>Building intelligence dashboards</li>
+</ul>
+
+<hr>
+
+<h3>Adventure H: Dynamic Account Segmentation</h3>
+
+<p><strong>Goal</strong>: Create smart customer segments that update automatically.</p>
+
+<p><strong>Prompt Cortex Code:</strong></p>
+<pre><code><span class="keyword">CREATE</span> dynamic tables that segment accounts into:
+- <span class="string">"Growth Champions"</span> - High health, expanding product usage
+- <span class="string">"At Risk Revenue"</span> - High ARR but declining health/engagement  
+- <span class="string">"Untapped Potential"</span> - Good health, low product coverage
+- <span class="string">"Urgent Attention"</span> - Low health, upcoming renewal
+
+Include recommended actions for each segment based on their characteristics.</code></pre>
+
+<p><strong>What you'll learn:</strong></p>
+<ul>
+    <li>Dynamic tables for real-time segmentation</li>
+    <li>Business logic in SQL</li>
+    <li>Actionable analytics patterns</li>
+</ul>
 
 <hr>
 
@@ -602,33 +1147,59 @@
 <h2 id="troubleshooting">Troubleshooting</h2>
 
 <h3>Dynamic tables not refreshing</h3>
-<pre><code>ALTER DYNAMIC TABLE PROD.FINAL.ACCOUNT_DAILY REFRESH;</code></pre>
+<pre><code><span class="keyword">ALTER DYNAMIC TABLE</span> PROD.FINAL.ACCOUNT_DAILY <span class="keyword">REFRESH</span>;</code></pre>
 
 <h3>Agent not appearing in Snowflake Intelligence</h3>
 <p>Ensure grants are applied and user has access to <code>SNOWFLAKE_INTELLIGENCE.AGENTS</code> schema.</p>
 
 <h3>Postgres CDC not syncing</h3>
 <ol>
-    <li>Verify publication exists: <code>SELECT * FROM pg_publication;</code></li>
-    <li>Check replication slot: <code>SELECT * FROM pg_replication_slots;</code></li>
+    <li>Verify publication exists: <code><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> pg_publication;</code></li>
+    <li>Check replication slot: <code><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> pg_replication_slots;</code></li>
     <li>Verify user has REPLICATION privilege</li>
 </ol>
 
 <h3>Case sensitivity issues with CDC tables</h3>
 <p>PostgreSQL objects sync as lowercase. Use double quotes:</p>
-<pre><code>-- Correct
-SELECT * FROM Okta_PGCDC_DB."public"."users";
+<pre><code><span class="comment">-- Correct</span>
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> Okta_PGCDC_DB.<span class="string">"public"</span>.<span class="string">"users"</span>;
 
--- Incorrect (will fail)
-SELECT * FROM Okta_PGCDC_DB.public.USERS;</code></pre>
+<span class="comment">-- Incorrect (will fail)</span>
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> Okta_PGCDC_DB.public.USERS;</code></pre>
 
 <hr>
 
 <h2 id="teardown">Teardown / Cleanup</h2>
 
+<p>📁 <strong>File</strong>: <code>setup/99_teardown/teardown_all.sql</code></p>
 <p>To completely remove all objects created in this lab:</p>
 
-<pre><code>@setup/99_teardown/teardown_all.sql</code></pre>
+<pre><code><span class="comment">-- Full cleanup script</span>
+<span class="keyword">USE ROLE</span> ACCOUNTADMIN;
+
+<span class="comment">-- Drop Cortex Agent</span>
+<span class="keyword">DROP AGENT IF EXISTS</span> SNOWFLAKE_INTELLIGENCE.AGENTS.CUSTOMER_360_AGENT;
+
+<span class="comment">-- Drop Cortex Search Services</span>  
+<span class="keyword">DROP CORTEX SEARCH SERVICE IF EXISTS</span> PROD.FINAL.CONTRACT_SEARCH;
+<span class="keyword">DROP CORTEX SEARCH SERVICE IF EXISTS</span> PROD.FINAL.TRANSCRIPT_SEARCH;
+
+<span class="comment">-- Drop Semantic View</span>
+<span class="keyword">DROP SEMANTIC VIEW IF EXISTS</span> PROD.FINAL.CUSTOMER_360_SEMANTIC_VIEW;
+
+<span class="comment">-- Drop databases</span>
+<span class="keyword">DROP DATABASE IF EXISTS</span> PROD;
+<span class="keyword">DROP DATABASE IF EXISTS</span> SNOWFLAKE_INTELLIGENCE;
+<span class="keyword">DROP DATABASE IF EXISTS</span> Okta_PGCDC_DB;
+
+<span class="comment">-- Drop Postgres CDC objects</span>
+<span class="keyword">DROP WAREHOUSE IF EXISTS</span> Okta_PGCDC_WH;
+<span class="keyword">DROP ROLE IF EXISTS</span> Postgres_HOL_ROLE;
+
+<span class="comment">-- Drop network policies and integrations</span>
+<span class="keyword">DROP EXTERNAL ACCESS INTEGRATION IF EXISTS</span> okta_pgcdc_access;
+<span class="keyword">DROP NETWORK RULE IF EXISTS</span> okta_pgcdc_rule;
+<span class="keyword">DROP NETWORK POLICY IF EXISTS</span> POSTGRES_ACCESS_POLICY;</code></pre>
 
 <p>This script removes:</p>
 <ul>
@@ -644,7 +1215,7 @@ SELECT * FROM Okta_PGCDC_DB.public.USERS;</code></pre>
 <div class="important">
 <strong>Manual cleanup required:</strong>
 <ol>
-    <li><strong>Snowflake Postgres</strong>: Delete via UI (Data → Databases → your Postgres instance → Delete)</li>
+    <li><strong>Snowflake Postgres</strong>: Delete via UI (Postgres → your instance → Delete)</li>
     <li><strong>Openflow Runtime</strong>: Stop and delete connectors/runtime via UI</li>
 </ol>
 </div>
